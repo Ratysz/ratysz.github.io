@@ -59,17 +59,17 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a class='srclink' href='../../src/ggez/conf.rs.html#1-875' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Functions for loading and saving engine configurations.</p>
-<p>A <code>Conf</code> struct is used to specify hardware setup stuff used to create
-the window and other context information.</p>
+               </span><a class='srclink' href='../../src/ggez/conf.rs.html#1-876' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Functions for loading and saving engine configurations.</p>
+<p><code>Conf</code> struct specifies the hardware setup stuff needed
+to create the window, graphics context, etc.</p>
 <p>By default, a <code>ggez</code> game will search it's resource paths for a <code>/conf.toml</code>
 file, and load values from it on <code>Context</code> creation; this file
-doesn't have to be complete (you can fill in some fields and have the
-rest be default).</p>
+doesn't have to be complete - you can fill in some fields and have the
+rest be default.</p>
 <p>Conversely, when writing <code>Conf</code> to a TOML file (via <code>Conf::to_toml_file()</code>),
 fields with default values will not appear in the output.</p>
-<p>Default values can be found in documentation of
-structs of the module.</p>
+<p>Default values (and more TOML snippets) can be found in documentation
+of module's types.</p>
 <p>Here's an example config and it's equivalent TOML:</p>
 
 <pre class="rust rust-example-rendered">
@@ -133,8 +133,8 @@ structs of the module.</p>
                            <td><a class="struct" href="struct.WindowMode.html"
                                   title='struct ggez::conf::WindowMode'>WindowMode</a></td>
                            <td class='docblock-short'>
-                                <p>A builder structure containing window settings
-that can be set at runtime and changed with <code>graphics::set_mode()</code>.</p>
+                                <p>A builder structure containing window settings that can be
+changed at runtime via <code>graphics::set_mode()</code>.</p>
 
                            </td>
                        </tr>
@@ -152,9 +152,7 @@ set at init time and (mostly) cannot be changed afterwards.</p>
                            <td><a class="enum" href="enum.Backend.html"
                                   title='enum ggez::conf::Backend'>Backend</a></td>
                            <td class='docblock-short'>
-                                <p>Possible graphics backends.
-Currently, only OpenGL itself is supported,
-but this lets you specify the version numbers.</p>
+                                <p>Possible graphics backends.</p>
 
                            </td>
                        </tr>

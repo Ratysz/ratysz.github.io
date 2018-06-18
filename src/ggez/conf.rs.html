@@ -930,22 +930,23 @@
 <span id="873">873</span>
 <span id="874">874</span>
 <span id="875">875</span>
+<span id="876">876</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! Functions for loading and saving engine configurations.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! A `Conf` struct is used to specify hardware setup stuff used to create</span>
-<span class="doccomment">//! the window and other context information.</span>
+<span class="doccomment">//! `Conf` struct specifies the hardware setup stuff needed</span>
+<span class="doccomment">//! to create the window, graphics context, etc.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! By default, a `ggez` game will search it&#39;s resource paths for a `/conf.toml`</span>
 <span class="doccomment">//! file, and load values from it on `Context` creation; this file</span>
-<span class="doccomment">//! doesn&#39;t have to be complete (you can fill in some fields and have the</span>
-<span class="doccomment">//! rest be default).</span>
+<span class="doccomment">//! doesn&#39;t have to be complete - you can fill in some fields and have the</span>
+<span class="doccomment">//! rest be default.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Conversely, when writing `Conf` to a TOML file (via `Conf::to_toml_file()`),</span>
 <span class="doccomment">//! fields with default values will not appear in the output.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Default values can be found in documentation of</span>
-<span class="doccomment">//! structs of the module.</span>
+<span class="doccomment">//! Default values (and more TOML snippets) can be found in documentation</span>
+<span class="doccomment">//! of module&#39;s types.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Here&#39;s an example config and it&#39;s equivalent TOML:</span>
 <span class="doccomment">//!</span>
@@ -1064,8 +1065,8 @@
     <span class="ident">Index</span>(<span class="ident">usize</span>),
 }
 
-<span class="doccomment">/// A builder structure containing window settings</span>
-<span class="doccomment">/// that can be set at runtime and changed with `graphics::set_mode()`.</span>
+<span class="doccomment">/// A builder structure containing window settings that can be</span>
+<span class="doccomment">/// changed at runtime via `graphics::set_mode()`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Defaults:</span>
 <span class="doccomment">///</span>
@@ -1167,8 +1168,8 @@
 <span class="doccomment">/// A builder structure containing window settings that must be</span>
 <span class="doccomment">/// set at init time and (mostly) cannot be changed afterwards.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Functions of `graphics` module allow changing some of these</span>
-<span class="doccomment">/// values (ie, title and icon) at runtime.</span>
+<span class="doccomment">/// `graphics::set_window_icon()` and `graphics::set_window_title()`</span>
+<span class="doccomment">/// allow setting window title and icon at runtime.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Defaults:</span>
 <span class="doccomment">///</span>
@@ -1271,6 +1272,7 @@
 }
 
 <span class="doccomment">/// Possible graphics backends.</span>
+<span class="doccomment">///</span>
 <span class="doccomment">/// Currently, only OpenGL itself is supported,</span>
 <span class="doccomment">/// but this lets you specify the version numbers.</span>
 <span class="doccomment">///</span>
