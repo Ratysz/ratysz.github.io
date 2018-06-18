@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `graphics` mod in crate `ggez`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, graphics">
+
+    <title>ggez::graphics - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css"
+          id="mainThemeStyle">
+    
+    <link rel="stylesheet" type="text/css" href="../../dark.css">
+    <link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle">
+    <script src="../../storage.js"></script>
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Module graphics</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'><a href='../index.html'>ggez</a></p><script>window.sidebarCurrent = {name: 'graphics', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div>
+    </nav>
+
+    <div class="theme-picker">
+        <button id="theme-picker" aria-label="Pick another theme!">
+            <img src="../../brush.svg" width="18" alt="Pick another theme!">
+        </button>
+        <div id="theme-choices"></div>
+    </div>
+    <script src="../../theme.js"></script>
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content"><h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>ggez</a>::<wbr><a class="mod" href=''>graphics</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/ggez/graphics/mod.rs.html#1-854' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>The <code>graphics</code> module performs the actual drawing of images, text, and other
+objects with the <code>Drawable</code> trait.  It also handles basic loading of images
+and text.</p>
+<p>This module also manages graphics state, coordinate systems, etc.
+The default coordinate system has the origin in the upper-left
+corner of the screen, with Y increasing downwards.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="pipe/index.html"
+                                  title='mod ggez::graphics::pipe'>pipe</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="spritebatch/index.html"
+                                  title='mod ggez::graphics::spritebatch'>spritebatch</a></td>
+                           <td class='docblock-short'>
+                                <p>A <code>SpriteBatch</code> is a way to efficiently draw a large
+number of copies of the same image, or part of the same image.  It's
+useful for implementing tiled maps, spritesheets, particles, and
+other such things.</p>
+
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.BitmapFont.html"
+                                  title='struct ggez::graphics::BitmapFont'>BitmapFont</a></td>
+                           <td class='docblock-short'>
+                                <p>A bitmap font where letter widths are infered</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.CanvasGeneric.html"
+                                  title='struct ggez::graphics::CanvasGeneric'>CanvasGeneric</a></td>
+                           <td class='docblock-short'>
+                                <p>A generic canvas independent of graphics backend. This type should probably
+never be used directly; use <code>ggez::graphics::Canvas</code> instead.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Color.html"
+                                  title='struct ggez::graphics::Color'>Color</a></td>
+                           <td class='docblock-short'>
+                                <p>A RGBA color in the <code>sRGB</code> color space represented as <code>f32</code>'s in the range <code>[0.0-1.0]</code></p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.DrawParam.html"
+                                  title='struct ggez::graphics::DrawParam'>DrawParam</a></td>
+                           <td class='docblock-short'>
+                                <p>A struct containing all the necessary info for drawing a Drawable.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.EmptyConst.html"
+                                  title='struct ggez::graphics::EmptyConst'>EmptyConst</a></td>
+                           <td class='docblock-short'>
+                                <p>A type for empty shader data for shaders that do not require any additional
+data to be sent to the GPU</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.FillOptions.html"
+                                  title='struct ggez::graphics::FillOptions'>FillOptions</a></td>
+                           <td class='docblock-short'>
+                                <p>Parameters for the fill tessellator.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.FontId.html"
+                                  title='struct ggez::graphics::FontId'>FontId</a></td>
+                           <td class='docblock-short'>
+                                <p>Id for a font, the default <code>FontId(0)</code> will always be present in a <code>GlyphBrush</code></p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.GlBackendSpec.html"
+                                  title='struct ggez::graphics::GlBackendSpec'>GlBackendSpec</a></td>
+                           <td class='docblock-short'>
+                                <p>A backend specification for OpenGL.
+This is different from <code>conf::Backend</code> because
+this needs to be its own struct to implement traits upon,
+and because there may need to be a layer of translation
+between what the user specifies in the config, and what the
+graphics backend init code actually gets.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Globals.html"
+                                  title='struct ggez::graphics::Globals'>Globals</a></td>
+                           <td class='docblock-short'>
+                                <p>Internal structure containing global shader state.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ImageGeneric.html"
+                                  title='struct ggez::graphics::ImageGeneric'>ImageGeneric</a></td>
+                           <td class='docblock-short'>
+                                <p>Generic in-GPU-memory image data available to be drawn on the screen.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.InstanceProperties.html"
+                                  title='struct ggez::graphics::InstanceProperties'>InstanceProperties</a></td>
+                           <td class='docblock-short'>
+                                <p>Internal structure containing values that are different for each
+drawable object.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Mesh.html"
+                                  title='struct ggez::graphics::Mesh'>Mesh</a></td>
+                           <td class='docblock-short'>
+                                <p>2D polygon mesh.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.MeshBuilder.html"
+                                  title='struct ggez::graphics::MeshBuilder'>MeshBuilder</a></td>
+                           <td class='docblock-short'>
+                                <p>A builder for creating <code>Mesh</code>es.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.PrimitiveDrawParam.html"
+                                  title='struct ggez::graphics::PrimitiveDrawParam'>PrimitiveDrawParam</a></td>
+                           <td class='docblock-short'>
+                                <p>A <code>DrawParam</code> that has been crunched down to a single matrix.
+Useful for doing matrix-based coordiante transformations, I hope.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Rect.html"
+                                  title='struct ggez::graphics::Rect'>Rect</a></td>
+                           <td class='docblock-short'>
+                                <p>A simple 2D rectangle.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ShaderGeneric.html"
+                                  title='struct ggez::graphics::ShaderGeneric'>ShaderGeneric</a></td>
+                           <td class='docblock-short'>
+                                <p>A <code>ShaderGeneric</code> reprensents a handle user-defined shader that can be used
+with a ggez graphics context that is generic over <code>gfx::Resources</code></p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.ShaderLock.html"
+                                  title='struct ggez::graphics::ShaderLock'>ShaderLock</a></td>
+                           <td class='docblock-short'>
+                                <p>A lock for RAII shader regions. The shader automatically gets cleared once
+the lock goes out of scope, restoring the previous shader (if any).</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.StrokeOptions.html"
+                                  title='struct ggez::graphics::StrokeOptions'>StrokeOptions</a></td>
+                           <td class='docblock-short'>
+                                <p>Parameters for the tessellator.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Text.html"
+                                  title='struct ggez::graphics::Text'>Text</a></td>
+                           <td class='docblock-short'>
+                                <p>Drawable text created from a <code>Font</code>.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.TextCached.html"
+                                  title='struct ggez::graphics::TextCached'>TextCached</a></td>
+                           <td class='docblock-short'>
+                                <p>Drawable text.
+Can be either monolithic, or consist of differently-formatted fragments.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.TextFragment.html"
+                                  title='struct ggez::graphics::TextFragment'>TextFragment</a></td>
+                           <td class='docblock-short'>
+                                <p>A piece of text with optional color, font and font scale information.
+These options take precedence over any similar field/argument.
+Can be implicitly constructed from <code>String</code>, <code>(String, Color)</code>, and <code>(String, FontId, Scale)</code>.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Vertex.html"
+                                  title='struct ggez::graphics::Vertex'>Vertex</a></td>
+                           <td class='docblock-short'>
+                                <p>Internal structure containing vertex data.</p>
+
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Align.html"
+                                  title='enum ggez::graphics::Align'>Align</a></td>
+                           <td class='docblock-short'>
+                                <p>Describes horizontal alignment preference for positioning &amp; bounds.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.BlendMode.html"
+                                  title='enum ggez::graphics::BlendMode'>BlendMode</a></td>
+                           <td class='docblock-short'>
+                                <p>An enum for specifying default and custom blend modes</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.DrawMode.html"
+                                  title='enum ggez::graphics::DrawMode'>DrawMode</a></td>
+                           <td class='docblock-short'>
+                                <p>Specifies whether a shape should be drawn
+filled or as an outline.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.FillRule.html"
+                                  title='enum ggez::graphics::FillRule'>FillRule</a></td>
+                           <td class='docblock-short'>
+                                <p>The fill rule defines how to determine what is inside and what is outside of the shape.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.FilterMode.html"
+                                  title='enum ggez::graphics::FilterMode'>FilterMode</a></td>
+                           <td class='docblock-short'>
+                                <p>Specifies what blending method to use when scaling up/down images.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Font.html"
+                                  title='enum ggez::graphics::Font'>Font</a></td>
+                           <td class='docblock-short'>
+                                <p>A font that defines the shape of characters drawn on the screen.
+Can be created from a .ttf file or from an image (bitmap fonts).</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.ImageFormat.html"
+                                  title='enum ggez::graphics::ImageFormat'>ImageFormat</a></td>
+                           <td class='docblock-short'>
+                                <p>The supported formats for saving an image.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.LineCap.html"
+                                  title='enum ggez::graphics::LineCap'>LineCap</a></td>
+                           <td class='docblock-short'>
+                                <p>Line cap as defined by the SVG specification.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.LineJoin.html"
+                                  title='enum ggez::graphics::LineJoin'>LineJoin</a></td>
+                           <td class='docblock-short'>
+                                <p>Line join as defined by the SVG specification.</p>
+
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="constant" href="constant.BLACK.html"
+                                  title='constant ggez::graphics::BLACK'>BLACK</a></td>
+                           <td class='docblock-short'>
+                                <p>Black</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="constant" href="constant.DEFAULT_FONT_SCALE.html"
+                                  title='constant ggez::graphics::DEFAULT_FONT_SCALE'>DEFAULT_FONT_SCALE</a></td>
+                           <td class='docblock-short'>
+                                <p>Default scale, used as <code>Scale::uniform(DEFAULT_FONT_SCALE)</code> when no explicit scale is given.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="constant" href="constant.WHITE.html"
+                                  title='constant ggez::graphics::WHITE'>WHITE</a></td>
+                           <td class='docblock-short'>
+                                <p>White</p>
+
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.BackendSpec.html"
+                                  title='trait ggez::graphics::BackendSpec'>BackendSpec</a></td>
+                           <td class='docblock-short'>
+                                <p>A marker trait saying that something is a label for a particular backend,
+with associated gfx-rs types for that backend.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.Drawable.html"
+                                  title='trait ggez::graphics::Drawable'>Drawable</a></td>
+                           <td class='docblock-short'>
+                                <p>All types that can be drawn on the screen implement the <code>Drawable</code> trait.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ShaderHandle.html"
+                                  title='trait ggez::graphics::ShaderHandle'>ShaderHandle</a></td>
+                           <td class='docblock-short'>
+                                <p>A trait that is used to create trait objects to abstract away the
+Structure<ConstFormat> type of the constant data for drawing</p>
+
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.apply_transformations.html"
+                                  title='fn ggez::graphics::apply_transformations'>apply_transformations</a></td>
+                           <td class='docblock-short'>
+                                <p>Calculates the new total transformation (Model-View-Projection) matrix
+based on the matrices at the top of the transform and view matrix stacks
+and sends it to the graphics card.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.circle.html"
+                                  title='fn ggez::graphics::circle'>circle</a></td>
+                           <td class='docblock-short'>
+                                <p>Draw a circle.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.clear.html"
+                                  title='fn ggez::graphics::clear'>clear</a></td>
+                           <td class='docblock-short'>
+                                <p>Clear the screen to the background color.
+TODO: Into<Color> ?</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.clear_shader.html"
+                                  title='fn ggez::graphics::clear_shader'>clear_shader</a></td>
+                           <td class='docblock-short'>
+                                <p>Clears the the current shader for the Context, restoring the default shader.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.draw.html"
+                                  title='fn ggez::graphics::draw'>draw</a></td>
+                           <td class='docblock-short'>
+                                <p>Draws the given <code>Drawable</code> object to the screen by calling its
+<code>draw()</code> method.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.draw_primitive.html"
+                                  title='fn ggez::graphics::draw_primitive'>draw_primitive</a></td>
+                           <td class='docblock-short'>
+                                <p>Draws the given <code>Drawable</code> object to the screen by calling its <code>draw_ex()</code> method.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.ellipse.html"
+                                  title='fn ggez::graphics::ellipse'>ellipse</a></td>
+                           <td class='docblock-short'>
+                                <p>Draw an ellipse.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_default_filter.html"
+                                  title='fn ggez::graphics::get_default_filter'>get_default_filter</a></td>
+                           <td class='docblock-short'>
+                                <p>Get the default filter mode for new images.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_depth_view.html"
+                                  title='fn ggez::graphics::get_depth_view'>get_depth_view</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the gfx-rs depth target object for ggez's rendering context.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_device.html"
+                                  title='fn ggez::graphics::get_device'>get_device</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the gfx-rs <code>Device</code> object for ggez's rendering context.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_drawable_size.html"
+                                  title='fn ggez::graphics::get_drawable_size'>get_drawable_size</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the size of the window's underlying drawable in pixels as (width, height).
+Returns zeros if window doesn't exist.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_encoder.html"
+                                  title='fn ggez::graphics::get_encoder'>get_encoder</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the gfx-rs <code>Encoder</code> object for ggez's rendering context.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_factory.html"
+                                  title='fn ggez::graphics::get_factory'>get_factory</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the gfx-rs <code>Factory</code> object for ggez's rendering context.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_gfx_objects.html"
+                                  title='fn ggez::graphics::get_gfx_objects'>get_gfx_objects</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns raw <code>gfx-rs</code> state objects, if you want to use <code>gfx-rs</code> to write
+your own graphics pipeline then this gets you the interfaces you need
+to do so.
+Returns all the relevant objects at once;
+getting them one by one is awkward 'cause it tends to create double-borrows
+on the Context object.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_projection.html"
+                                  title='fn ggez::graphics::get_projection'>get_projection</a></td>
+                           <td class='docblock-short'>
+                                <p>Gets a copy of the context's raw projection matrix</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_renderer_info.html"
+                                  title='fn ggez::graphics::get_renderer_info'>get_renderer_info</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns a string that tells a little about the obtained rendering mode.
+It is supposed to be human-readable and will change; do not try to parse
+information out of it!</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_screen_coordinates.html"
+                                  title='fn ggez::graphics::get_screen_coordinates'>get_screen_coordinates</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns a rectangle defining the coordinate system of the screen.
+It will be <code>Rect { x: left, y: top, w: width, h: height }</code></p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_screen_render_target.html"
+                                  title='fn ggez::graphics::get_screen_render_target'>get_screen_render_target</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the gfx-rs color target object for ggez's rendering context.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_size.html"
+                                  title='fn ggez::graphics::get_size'>get_size</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns the size of the window in pixels as (width, height),
+including borders, titlebar, etc.
+Returns zeros if window doesn't exist.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_transform.html"
+                                  title='fn ggez::graphics::get_transform'>get_transform</a></td>
+                           <td class='docblock-short'>
+                                <p>Gets a copy of the context's current transform matrix</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.get_window.html"
+                                  title='fn ggez::graphics::get_window'>get_window</a></td>
+                           <td class='docblock-short'>
+                                <p>Returns a reference to the SDL window.
+Ideally you should not need to use this because ggez
+would provide all the functions you need without having
+to dip into SDL itself.  But life isn't always ideal.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.line.html"
+                                  title='fn ggez::graphics::line'>line</a></td>
+                           <td class='docblock-short'>
+                                <p>Draws a line of one or more connected segments.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.origin.html"
+                                  title='fn ggez::graphics::origin'>origin</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the current model transform to the origin transform (no transformation)</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.points.html"
+                                  title='fn ggez::graphics::points'>points</a></td>
+                           <td class='docblock-short'>
+                                <p>Draws points (as rectangles)</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.polygon.html"
+                                  title='fn ggez::graphics::polygon'>polygon</a></td>
+                           <td class='docblock-short'>
+                                <p>Draws a closed polygon</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.pop_transform.html"
+                                  title='fn ggez::graphics::pop_transform'>pop_transform</a></td>
+                           <td class='docblock-short'>
+                                <p>Pops the transform matrix off the top of the transform
+(model) matrix stack of the <code>Context</code>.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.present.html"
+                                  title='fn ggez::graphics::present'>present</a></td>
+                           <td class='docblock-short'>
+                                <p>Tells the graphics system to actually put everything on the screen.
+Call this at the end of your <code>EventHandler</code>'s <code>draw()</code> method.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.push_transform.html"
+                                  title='fn ggez::graphics::push_transform'>push_transform</a></td>
+                           <td class='docblock-short'>
+                                <p>Pushes a homogeneous transform matrix to the top of the transform
+(model) matrix stack of the <code>Context</code>. If no matrix is given, then
+pushes a copy of the current transform matrix to the top of the stack.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.rectangle.html"
+                                  title='fn ggez::graphics::rectangle'>rectangle</a></td>
+                           <td class='docblock-short'>
+                                <p>Draws a rectangle.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.screenshot.html"
+                                  title='fn ggez::graphics::screenshot'>screenshot</a></td>
+                           <td class='docblock-short'>
+                                <p>Take a screenshot by outputting the current render surface
+(screen or selected canvas) to a PNG file.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_blend_mode.html"
+                                  title='fn ggez::graphics::set_blend_mode'>set_blend_mode</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the blend mode of the currently active shader program</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_canvas.html"
+                                  title='fn ggez::graphics::set_canvas'>set_canvas</a></td>
+                           <td class='docblock-short'>
+                                <p>Set the canvas to render to. Specifying <code>Option::None</code> will cause all
+rendering to be done directly to the screen.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_default_filter.html"
+                                  title='fn ggez::graphics::set_default_filter'>set_default_filter</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the default filter mode used to scale images.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_fullscreen.html"
+                                  title='fn ggez::graphics::set_fullscreen'>set_fullscreen</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the window to fullscreen or back.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_mode.html"
+                                  title='fn ggez::graphics::set_mode'>set_mode</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the window mode, such as the size and other properties.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_projection.html"
+                                  title='fn ggez::graphics::set_projection'>set_projection</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the raw projection matrix to the given homogeneous
+transformation matrix.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_resolution.html"
+                                  title='fn ggez::graphics::set_resolution'>set_resolution</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the window resolution based on the specified width and height.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_screen_coordinates.html"
+                                  title='fn ggez::graphics::set_screen_coordinates'>set_screen_coordinates</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the bounds of the screen viewport.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_shader.html"
+                                  title='fn ggez::graphics::set_shader'>set_shader</a></td>
+                           <td class='docblock-short'>
+                                <p>Set the current  shader for the Context to render with</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_transform.html"
+                                  title='fn ggez::graphics::set_transform'>set_transform</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the current model transformation to the given homogeneous
+transformation matrix.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_window_icon.html"
+                                  title='fn ggez::graphics::set_window_icon'>set_window_icon</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the window icon.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.set_window_title.html"
+                                  title='fn ggez::graphics::set_window_title'>set_window_title</a></td>
+                           <td class='docblock-short'>
+                                <p>Sets the window title.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.transform.html"
+                                  title='fn ggez::graphics::transform'>transform</a></td>
+                           <td class='docblock-short'>
+                                <p>Premultiplies the given transform with the current model transform.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.transform_projection.html"
+                                  title='fn ggez::graphics::transform_projection'>transform_projection</a></td>
+                           <td class='docblock-short'>
+                                <p>Premultiplies the given transformation matrix with the current projection matrix</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.use_shader.html"
+                                  title='fn ggez::graphics::use_shader'>use_shader</a></td>
+                           <td class='docblock-short'>
+                                <p>Use a shader until the returned lock goes out of scope</p>
+
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Canvas.html"
+                                  title='type ggez::graphics::Canvas'>Canvas</a></td>
+                           <td class='docblock-short'>
+                                <p>A canvas that can be rendered to instead of the screen (sometimes referred
+to as &quot;render target&quot; or &quot;render to texture&quot;). Set the canvas with the
+<code>ggez::graphics::set_canvas()</code> function, and then anything you
+draw will be drawn to the canvas instead of the screen.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Image.html"
+                                  title='type ggez::graphics::Image'>Image</a></td>
+                           <td class='docblock-short'>
+                                <p>In-GPU-memory image data available to be drawn on the screen,
+using the OpenGL backend.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Scale.html"
+                                  title='type ggez::graphics::Scale'>Scale</a></td>
+                           <td class='docblock-short'>
+                                <p>Aliased type to allow lib usage without declaring underlying <strong>rusttype</strong> lib</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Shader.html"
+                                  title='type ggez::graphics::Shader'>Shader</a></td>
+                           <td class='docblock-short'>
+                                <p>A <code>Shader</code> represents a handle to a user-defined shader that can be used
+with a ggez graphics context</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.ShaderId.html"
+                                  title='type ggez::graphics::ShaderId'>ShaderId</a></td>
+                           <td class='docblock-short'>
+                                <p>An ID used by the <code>GraphicsContext</code> to uniquely identify a shader</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.WrapMode.html"
+                                  title='type ggez::graphics::WrapMode'>WrapMode</a></td>
+                           <td class='docblock-short'>
+                                <p>Specifies how to wrap textures.</p>
+
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt><kbd>?</kbd></dt>
+                    <dd>Show this help dialog</dd>
+                    <dt><kbd>S</kbd></dt>
+                    <dd>Focus the search field</dd>
+                    <dt><kbd>↑</kbd></dt>
+                    <dd>Move up in search results</dd>
+                    <dt><kbd>↓</kbd></dt>
+                    <dd>Move down in search results</dd>
+                    <dt><kbd>↹</kbd></dt>
+                    <dd>Switch tab</dd>
+                    <dt><kbd>&#9166;</kbd></dt>
+                    <dd>Go to active search result</dd>
+                    <dt><kbd>+</kbd></dt>
+                    <dd>Expand all sections</dd>
+                    <dt><kbd>-</kbd></dt>
+                    <dd>Collapse all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "ggez";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>
