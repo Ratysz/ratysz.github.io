@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["GameError","An enum containing all kinds of game framework errors."]],"type":[["GameResult","A convenient result type consisting of a return type and a `GameError`"]]});

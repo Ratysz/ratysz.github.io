@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["SpriteBatch","A `SpriteBatch` draws a number of copies of the same image, using a single draw call."],["SpriteIdx","An index of a particular sprite in a `SpriteBatch`."]]});
