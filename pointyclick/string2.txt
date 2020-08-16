@@ -1,3 +1,0 @@
-SomeStruct(
-    string: "asdf"
-)
