@@ -1,13 +1,13 @@
 +++
-title = "(DRAFT) ECS scheduler thoughts, part 1"
-date = 2020-09-01
+title = "ECS schedulers, part 1"
+date = 2020-10-31
 
 [taxonomies]
 #categories = ["Articles"]
-#tags = ["ECS", "Scheduling", "Rust"]
+#tags = ["ECS", "Scheduler", "Rust"]
 +++
 
-Part 1 covers... TODO
+Part 1 covers... // TODO
 
 <!-- more -->
 
@@ -19,12 +19,12 @@ language is necessary for understanding its ideas and conclusions.*
 # What is a scheduler?
 
 Behavior of an ECS program is described by one or several "systems" -
-the "S" part of ECS - functions that operate on the data contained within
+the "S" part of ECS - functions that operate on the shared data contained within
 the "EC" part.
 ECS paradigm is used almost exclusively in the context of game and engine
 programming, with some set of systems the program contains normally running
 every "frame" - a pre-determined time interval, not necessarily tied to the
-video frame rate of the game.
+video frame rate.
 The amount of time required for all systems in a set to finish their work for
 the frame can be referred to as [makespan][makespan] of the set.
 
@@ -36,62 +36,131 @@ Said data can change at runtime, often through user input.
 
 For performance's sake - to minimize the makespan - it's sometimes desirable to
 have several of these systems executed at the same time, in parallel.
-However, in practice systems often operate on intersecting sets of data,
+In practice, however, systems often operate on intersecting sets of data,
 which necessitates the use of some kind of synchronization mechanism.
 
-Said mechanism can't be a simple lock over the data, since that would force the
-execution of systems to be sequential.
+Said mechanism can't be a simple lock over the shared data, since that would
+force the execution of systems to be sequential.
 It can be several orthogonal locks, but that's not the most performant approach,
 and runs the risk of deadlocking in a naive implementation.
 
 A more popular solution is to employ a special algorithm - a "scheduler" -
 that queues systems to run in a way that has better utilization of processing
-resources (read: threads) than running them sequentially, yet doesn't violate
-data access rules without the need for locks.
+resources (read: threads, since a thread can be running only one system at
+a time) than running them sequentially, yet doesn't violate data access rules
+without the need for locks.
 (In Rust these rules state that data may be changed from only one place
 at a time, and data that may be changed elsewhere cannot be read.)
 The problem of finding such an algorithm is closely related to the
 [multiprocessor scheduling][MPS] problem; finding the optimal schedule for the
-systems is NP-hard.
+systems is always NP-hard.
 
 [MPS]: https://en.wikipedia.org/wiki/Multiprocessor_scheduling
 
+For an ECS program to be schedulable it needs to be executable at least
+sequentially, i.e. whatever constraints on system order execution it might have
+must not contain cycles of dependencies - the systems must form an acyclic
+[disjunctive graph](https://en.wikipedia.org/wiki/Disjunctive_graph).
+Execution order will be elaborated upon further in the article; for now, the
+set {{katex(body="\Pi")}} will be said to contain all such programs:
+{% katex(block=true) %}
+    \Pi = \{ P | P \text{ is executable} \}.
+{% end %}
+
+An ECS program {{katex(body="P \in \Pi")}} consisting of {{katex(body="n")}}
+systems is further defined as such:
+{% katex(block=true) %}
+    P \stackrel{\mathrm{def}}{=} \{s_0, s_1, ..., s_n |
+    s_i \stackrel{\mathrm{def}}{=} (t_i, d_i) \},
+{% end %}
+where {{katex(body="s_i")}} is an individual system, {{katex(body="t_i")}}
+is the time it needs to complete its work, and {{katex(body="d_i")}}
+is the set of data it operates on. Then, a scheduling
+algorithm {{katex(body="sched")}} is a mapping of {{katex(body="P")}} to
+some schedule {{katex(body="S")}}:
+{% katex(block=true) %}
+    sched: \forall P \in \Pi, P \stackrel{sched}{\mapsto} S.
+{% end %}
+
+The makespan {{katex(body="M_{opt}")}} is the optimal makespan for a
+given {{katex(body="P")}}, {{katex(body="M_S")}} is the makespan
+of {{katex(body="S")}}, and {{katex(body="M_{seq}")}} is the practical
+worst-case makespan of executing all systems of {{katex(body="P")}} in
+sequence:
+{% katex(block=true) %}
+    M_{seq} = \sum_{i=0}^{n} t_i.
+{% end %}
+
+The problem then can be stated as finding
+{% katex(block=true) %}
+    sched: \forall P \in \Pi, P \stackrel{sched}{\mapsto} S,
+    M_S \le M_{seq}, M_S \to M_{opt},
+{% end %}
+and, ideally,
+{% katex(block=true) %}
+    sched \notin \text{NP}.
+{% end %}
+
 In this article, two systems are described as disjoint if running them in
-parallel would not violate access rules.
-If the rules would be violated, the systems are intersecting.
+parallel would not violate access rules,
+i.e. {{katex(body="
+    {s_i, s_j} \in P, i \neq j,
+    d_i \cap d_j = \emptyset
+")}}.
+If the rules would be violated, the systems are intersecting,
+i.e. {{katex(body="
+    {s_i, s_j} \in P, i \neq j,
+    d_i \cap d_j \neq \emptyset
+")}}.
 
 Disjointedness is not necessarily transitive. Example:
 
-* system `0` with required resource `A`
+* system `0` with required access to `A`
 * system `1` with `B`
 * system `2` with `A`
 
 Systems `0` and `1` are disjoint, systems `1` and `2` are disjoint, yet `0` and
-`2` intersect.
+`2` intersect; or, {{katex(body="
+    d_0 \cap d_1 = \emptyset,
+    d_1 \cap d_2 = \emptyset,
+    d_0 \cap d_2 \neq \emptyset
+")}}.
 
 Likewise, intersection is also not necessarily transitive. Example:
 
-* system `0` with required resource `A`
+* system `0` with required access to `A`
 * system `1` with `A` and `B`
 * system `2` with `B`
 
 Systems `0` and `1` intersect, systems `1` and `2` intersect, yet `0` and `2`
-are disjoint.
+are disjoint; or, {{katex(body="
+    d_0 \cap d_1 \neq \emptyset,
+    d_1 \cap d_2 \neq \emptyset,
+    d_0 \cap d_2 = \emptyset
+")}}.
 
 # Static schedule
 
-The first idea is to generate an execution schedule once, when the scheduler is
-first defined and populated.
-Even if doing so is NP-hard, it's not a constant cost, seeing as changes to the
-set of active systems are comparatively rare, if there are any at all.
+The first instinct is to generate an execution schedule once, when the scheduler
+is first defined and populated.
+Even if doing so is NP-hard, it wouldn't be a constant cost, seeing as changes
+to {{katex(body="P")}} are comparatively rare in practice, if there are any
+at all.
 
 One way or another, a sequence of sets of disjoint systems is produced; when
 the schedule is executed, sets are iterated sequentially, and systems within
 them are ran in parallel.
-This can be modeled as a directed acyclic graph (DAG), where nodes are the
-implicit synchronization points between the sets, and edges are the systems
-and connect the points in such a way that edges originating in one node all
-terminate in the same other node.
+This can be thought of as a DAG where nodes are the implicit synchronization
+points between the sets, and edges are the systems and connect the points
+in such a way that edges originating in one node all terminate
+in the same other node.
+Formally:
+{% katex(block=true) %}
+    stat \equiv sched_{static}, \newline
+    stat : \forall P \in \Pi, P \stackrel{stat}{\mapsto} S_{stat}, \newline
+    S_{stat} = \{ \sigma | \sigma = \{ s |  \forall {s_i, s_j} \in \sigma,
+    i \ne j, d_i \cap d_j = \emptyset \} \}.
+{% end %}
 
 Since the run time of a system is usually not known at the point of schedule
 creation, the schedule has to assume that all systems take equally as long.
@@ -100,28 +169,43 @@ and often independently change during the program's operation.
 This almost inevitably produces a situation where some systems in a disjoint
 set take longer than the rest, reducing average resource utilization.
 
-The scheduler could ask its user to provide hints for the system run time.
-This, obviously, puts a tremendous additional workload on the user - it requires
-them to anticipate all factors that might influence the run time.
-A framework could be built that, using specially-designed stress tests,
-"learns" (as in, machine learning) the time coefficients of a given program;
-the coefficients are later baked into the distributed binary's schedulers.
-Such approach is likely only feasible for specific projects, with relatively
-stable coefficients (and enough budget for shouldering the computational cost
-of the process).
+Assuming sufficient processing resources (all systems in a
+set {{katex(body="\sigma")}} can run in parallel at full performance),
+the best-case makespan {{katex(body="M_{stat}")}} of {{katex(body="S_{stat}")}}
+is the sum of {{katex(body="t")}} of the longest-running system in each
+disjoint set:
+{% katex(block=true) %}
+    M_{stat} = \sum_{\sigma \in S_{stat}} \max_{s_i \in \sigma}(t_i).
+{% end %}
+Trivially, if all systems of {{katex(body="P")}} are disjoint:
+{% katex(block=true) %}
+    \forall {s_i, s_j} \in P, i \ne j, d_i \cap d_j = \emptyset, \newline
+    S_{stat} \equiv S_{par}, M_{par} = \max_{s_i \in P}(t_i) \approx M_{opt}.
+{% end %}
+(Naturally, all correct scheduling algorithms should be able to
+produce {{katex(body="S_{par}")}} when applied to such {{katex(body="P")}}.)
+
+The first idea for alleviating the unknown time problem is to make the
+time known.
+
+The scheduler could ask its user to provide hints for the system run time,
+be it manually, or via some automated benchmark framework.
+However, anticipating all factors that might influence the run time is
+impractical for most projects, so this approach would be feasible only for
+programs with well-behaved, predictable time coefficients.
 
 Alternatively, the scheduler could collect the run times of systems during
-execution, picking up any changes, and adjusting the schedule to maximize
-utilization on the fly.
+execution, picking up on any changes, and adjusting the schedule to maximize
+utilization on the fly (making "static" a misnomer).
 Potential volatility of the run time could thwart this approach: if a system
 is recorded to take some amount of time to finish during this frame, it's not
 guaranteed to not take a vastly different amount next frame, when the
 measurement is actually used (in practice, persistently high volatility
 between frames is uncommon).
 
-The feasibility of static schedulers is further undermined by requirements of
-certain kinds of ECS, most notably archetypal ECS - a subtype distinct in the
-way it organizes data internally.
+The feasibility of pure {{katex(body="stat")}} is further undermined by
+requirements of certain kinds of ECS, most notably archetypal ECS - a subtype
+distinct in the way it organizes data internally.
 Without going into specifics: sometimes when the data in such an ECS changes
 it also changes which systems are disjoint.
 To address that, the scheduler must partially rebuild its execution graph
@@ -135,9 +219,9 @@ with the unknown time problem.)
 The idea of tweaking the schedule on the fly can be taken much further:
 a scheduler could retain no static execution graph at all.
 
-It would, instead, start execution of whichever system, then find another one
-that is disjoint with the one now running, then another that is disjoint with
-the two now running...
+Such {{katex(body="dyn \equiv sched_{dynamic}")}} would, instead, start
+execution of whichever system, then find another one that is disjoint with
+the one now running, then another that is disjoint with the two now running...
 Once no systems can be started the scheduler simply waits for one of them to
 finish; as soon as that happens, it checks again if more systems can now start.
 
@@ -152,23 +236,110 @@ However, the order in which systems start matters. Example:
 * `3` intersects `1`
 
 If `0` and `1` are started first, `2` can start after both of them finish,
-and `3` can start as soon as `0` finishes; `2` and `3` can run concurrently.
+and `3` can start as soon as `0` finishes; `2` and `3` can run in parallel.
 
 If `0` and `3` are started first, `1` can start after `3` finishes, and `2`
-can start after `0` finishes, but they can't run concurrently.
+can start after `0` finishes, but they can't run in parallel.
 
+This implies that a naive {{katex(body="dyn")}} implementation cannot be said
+to always produce an optimal schedule.
+
+# Practical considerations
+
+An important but not yet elaborated upon property of
+any {{katex(body="sched")}} can be gleaned from its definition: it needs to
+work for all {{katex(body="P \in \Pi")}}.
+In practice, these programs often impose additional requirements, which may
+narrow the search space (the amount of valid schedules) the algorithm has to
+contend with by constraining some of their systems to certain positions in the
+schedule.
+
+While these constraints may reduce the running time
+of {{katex(body="sched")}} itself, reducing the search space can potentially
+exclude the optimal schedule, which, coupled with the fact that no constraint
+can ever increase the search space, means that {{katex(body="M_{opt}")}} is
+either increased or not affected by any given constraint.
+
+## Thread-local systems
+
+Some systems may require being executed on the thread that defined them, due to
+some of the system's internal data being thread-local (in Rust terms, `!Send`
+and/or `!Sync`, depending on mutability of systems in a given implementation).
+
+This requirement does not forbid parallelization: thread-agnostic systems (or
+even systems local to different threads) may still run in parallel on other
+threads.
+
+While scheduling thread-local systems, it is only necessary to consider them in
+the context of their threads - an obvious constraint.
+The makespan of a program containing such systems has an additional lower
+bound - it cannot be less than the greatest sum of execution time of systems
+local to one thread:
 {% katex(block=true) %}
-\infty
-\KaTeX
-\infty
+    M_{opt} \ge \max_{T_i \in P}(\sum_{s_j \in T_i} t_j),
 {% end %}
+where {{katex(body="T_i")}} is a set of all {{katex(body="s \in P")}} local to
+thread {{katex(body="i")}}.
 
-This means that, on paper, a naive dynamic scheduler cannot be said to improve
-the makespan for all cases.
-In practice, it tends to win against any time-agnostic static scheduler as soon
-as there's the slightest discrepancy between system run times.
+## Thread-local data
 
-# Execution order
+Some of the data managed by the ECS may only be accessed by its defining thread
+(`!Sync` for strictly immutable data, otherwise  `!Send`).
+This case is similar to thread-local systems, differing in one key way:
+the thread-local data can be shared between several systems.
+
+However, it's impossible to run those systems in parallel: since such data can
+be accessed from only one thread, and a thread can run only one system
+at a time, only one system can be using the data at any given time.
+Therefore, all systems that access thread-local data are effectively
+thread-local systems.
+
+Systems that access thread-local data that belongs to several different threads
+are impossible to execute, and {{katex(body="P \notin \Pi")}} for
+any {{katex(body="P")}} that contains such systems.
+
+## Modifying data access
+
+Some operations performed by a system may modify the entirety of shared data
+in such a way that any active views into it will become invalid, e.g. inserting
+new entities or deleting entities - this modifies the collection of entities,
+which is not correct to do while the collection is being iterated (which
+is the most common access pattern in ECS).
+Such operations will be referred to as modifying, and systems that perform
+modifying operations will be referred to as modifying systems.
+
+One way to address the modifying systems is to give any such system exclusive
+access to entirety of shared data (i.e., `&mut World`), forbidding it to run
+concurrently with any other system.
+A {{katex(body="stat")}} would then place that system into its own
+exclusive {{katex(body="\sigma")}};
+a {{katex(body="dyn")}} would have to effectively introduce an implicit
+synchronisation point.
+This is not the same as splitting {{katex(body="P")}} in two: the algorithm is
+still free to place any systems before or after the modifying one, while
+splitting would constrain all systems to their respective half.
+
+Alternatively, modifying operations could be cached and performed at the end
+of schedule, when it's guaranteed that no systems are running.
+Unlike the one described earlier, this approach gives an important property
+to the operations: they will happen deterministically, at an obvious
+point in the schedule.
+
+## Stages
+
+Certain (common in practice) ECS programs can be uniquely split into
+sub-programs, here referred to as stages: all systems of a stage have to be
+executed before any systems of a subsequent stage.
+
+To schedule any such program a {{katex(body="sched")}} only needs to consider
+each individual stage on its own, greatly reducing the search space.
+Each stage is, effectively, an individual ECS program.
+
+Stages pair well with caching modifying operations: end of a stage can be used
+to apply the operations, allowing the next stage to, for example, access new
+entities created by the previous one.
+
+## Explicit execution order
 
 In some cases it's necessary to have an explicit execution order between two
 individual systems.
@@ -177,73 +348,53 @@ that the consumer runs after the producer may lead to one frame of delay in the
 event resolution; if there's a whole chain of systems depending on each other's
 output, the worst case for the delay will be as many frames as there are systems
 in said chain.
-Obviously, no cycles may exist in these dependencies for the systems graph to
-be executable.
 
-Presence of explicit ordering between however many of the systems greatly
-exacerbates the problem of having a schedule in the first place.
-A static scheduler can accomplish this by sorting a dependent system into a
-disjoint set that is executed after the sets containing its dependencies.
-A dynamic scheduler can maintain a list of systems that have all their
-dependencies satisfied and only execute systems from that list, updating it
-every time a system with dependents finishes.
+A {{katex(body="stat")}} can address ordering by sorting a dependent system into
+a {{katex(body="\sigma")}} that is executed after those containing its
+dependencies.
+
+A {{katex(body="dyn")}} would start only the systems that have all their
+dependencies satisfied.
+It could maintain a list of such systems, updating that whenever a system with
+dependents finishes; or, it could make the systems wait until they've received
+an amount of signals equal to the number of their dependencies, with every
+system that finishes signalling its dependents.
+
+Stages can be leveraged here, too: much like {{katex(body="stat")}} does
+automatically, the user could insert a dependent system into a previous stage.
+This, however, is a stronger constraint, as it effectively introduces explicit
+execution order between the dependent and all systems of subsequent stages.
+
+## Implicit execution order
+
+Another order-related constraint can be sourced not from the properties of a
+given {{katex(body="P")}}, but, rather, those of the API of the ECS library:
+when populating a schedule, systems are necessarily inserted in a sequence
+(whether explicitly or effectively, when gathering them from all sources into a
+single collection), and it could be quite intuitive if execution order reflected
+the insertion order.
+
+However, such implicit ordering would remove any and all parallel execution of
+systems, unless {{katex(body="sched")}} makes some sort of order-relaxing
+assumptions.
+For example, disjoint systems could be assumed to also be disjoint logically,
+i.e. systems acting on non-related data are assumed to implement non-related
+behaviors and thus don't have any implicit ordering between them.
+
+Naturally, any order relaxing {{katex(body="sched")}} would do should be
+overridden by a conflicting explicit order constraint.
+Inversely, there should be an "escape hatch" that lets users mark pairs of
+systems as independent, regardless of their accessed data, allowing the
+algorithm to schedule them in whatever order.
+
+# Summary and projects
 
 
 
-Sometimes, system insertion order has to be different from system execution order.
-Example: a plugin adds a system that processes some kind of events, a different
-plugin depends on the first one being initialized and adds a system that produces
-said kind of events.
-
-Sometimes, this dependency cannot be inferred from the systems' borrows
-(the resources and components/archetypes they access). Example: an item pickup
-system that writes pickup events to a channel sender, and a score system that
-increments player score based on the pickup events it reads from the
-channel receiver; one could get clever and give them a common type to let
-the schedule infer a dependency, but that, to me, is a counter-intuitive
-and unergonomic workaround.
-
-The current solution to this is stages: groups of systems that have a set
-execution order between themselves, and inferred execution order of individual
-systems within each group.
-
-# Why stages alone are not good enough
-
-As example, consider such a game:
-- thread pool with several threads for crunching ECS
-- systems `0`, `1`, `2`, `3`, and `4`, none of which can have
-batched (parallel) iteration (for simplicity's sake)
-- the systems don't have any incompatible borrows
-(it's not a stretch to have many systems with orthogonal borrows)
-- `0` and `1` don't depend on any other system
-- `2` depends on both `0` and `1`
-- `3` depends on `2`
-- `4` depends on `0`
-
-With stages, this can be expressed like this:
-- Stage 0: systems `0` and `1` are executed
-- Stage 1: systems `2` and `4` are executed
-- Stage 2: system `3` is executed
-
-System `4` can be moved around, including into its own stage,
-but these permutations are either equivalent or worse.
-What if `4` executes several times slower than `2`?
-In the configuration above, system `3` will be waiting until `4` finishes,
-despite being completely independent of it; same story with `4` waiting on `1`.
-Moreover, there are at most two threads in use.
-
-Another example:
-- thread pool with 16 threads
-- systems `0`, `1`, `2`, and `s_1` through `s_N`
-- `0` doesn't depend on any system
-- `1` and `2` depend on `0`
-
-# Summary
-TODO not here
-1. Stages should be used to express execution order between groups
-of systems, not individual systems.
-2. There should be a mechanism to express optional execution order between
-individual systems in a stage.
-3. Systems within a stage should be allowed to run opportunistically, i.e.,
+1. ~~Stages should be used to express execution order between groups
+of systems, not individual systems.~~
+2. ~~There should be a mechanism to express optional execution order between
+individual systems in a stage.~~
+3. ~~Systems within a stage should be allowed to run opportunistically, i.e.,
 whenever there are available resources (borrows and a thread) and no
-unsatisfied execution order dependencies.
+unsatisfied execution order dependencies.~~
