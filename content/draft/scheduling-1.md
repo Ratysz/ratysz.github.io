@@ -104,13 +104,13 @@ and, ideally,
 In this article, two systems are described as disjoint if running them in
 parallel would not violate access rules,
 i.e. {{katex(body="
-    {s_i, s_j} \in P, i \neq j,
+    {s_i, s_j} \in P, i \mathrel{\char8800} j,
     d_i \cap d_j = \emptyset
 ")}}.
 If the rules would be violated, the systems are intersecting,
 i.e. {{katex(body="
-    {s_i, s_j} \in P, i \neq j,
-    d_i \cap d_j \neq \emptyset
+    {s_i, s_j} \in P, i \mathrel{\char8800} j,
+    d_i \cap d_j \mathrel{\char8800} \emptyset
 ")}}.
 
 Disjointedness is not necessarily transitive. Example:
@@ -123,7 +123,7 @@ Systems `0` and `1` are disjoint, systems `1` and `2` are disjoint, yet `0` and
 `2` intersect; or, {{katex(body="
     d_0 \cap d_1 = \emptyset,
     d_1 \cap d_2 = \emptyset,
-    d_0 \cap d_2 \neq \emptyset
+    d_0 \cap d_2 \mathrel{\char8800} \emptyset
 ")}}.
 
 Likewise, intersection is also not necessarily transitive. Example:
@@ -134,8 +134,8 @@ Likewise, intersection is also not necessarily transitive. Example:
 
 Systems `0` and `1` intersect, systems `1` and `2` intersect, yet `0` and `2`
 are disjoint; or, {{katex(body="
-    d_0 \cap d_1 \neq \emptyset,
-    d_1 \cap d_2 \neq \emptyset,
+    d_0 \cap d_1 \mathrel{\char8800} \emptyset,
+    d_1 \cap d_2 \mathrel{\char8800} \emptyset,
     d_0 \cap d_2 = \emptyset
 ")}}.
 
