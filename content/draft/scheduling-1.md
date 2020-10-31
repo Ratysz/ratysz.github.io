@@ -159,7 +159,7 @@ Formally:
     stat \equiv sched_{static}, \newline
     stat : \forall P \in \Pi, P \stackrel{stat}{\mapsto} S_{stat}, \newline
     S_{stat} = \{ \sigma | \sigma = \{ s |  \forall {s_i, s_j} \in \sigma,
-    i \ne j, d_i \cap d_j = \emptyset \} \}.
+    i \mathrel{\char8800} j, d_i \cap d_j = \emptyset \} \}.
 {% end %}
 
 Since the run time of a system is usually not known at the point of schedule
@@ -179,7 +179,8 @@ disjoint set:
 {% end %}
 Trivially, if all systems of {{katex(body="P")}} are disjoint:
 {% katex(block=true) %}
-    \forall {s_i, s_j} \in P, i \ne j, d_i \cap d_j = \emptyset, \newline
+    \forall {s_i, s_j} \in P, i \mathrel{\char8800} j,
+    d_i \cap d_j = \emptyset, \newline
     S_{stat} \equiv S_{par}, M_{par} = \max_{s_i \in P}(t_i) \approx M_{opt}.
 {% end %}
 (Naturally, all correct scheduling algorithms should be able to
