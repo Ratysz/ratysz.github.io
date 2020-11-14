@@ -1,12 +1,11 @@
 base_url = "https://ratysz.github.io"
-
-theme = "Zulma"
+title = "Ratys' website thing"
 
 highlight_code = true
-
 highlight_theme = "material-dark"
-
 compile_sass = true
+
+theme = "Zulma"
 
 taxonomies = [
     {name = "tags"},

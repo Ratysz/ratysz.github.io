@@ -1,6 +1,6 @@
 +++
 title = "ECS scheduler thoughts, part 1"
-date = 2020-11-13
+date = 2020-11-14
 
 [taxonomies]
 #tags = ["ECS", "scheduler", "Rust"]
@@ -540,11 +540,9 @@ One of the main reasons for this article's existence is serving as a starting
 point for the [new Bevy scheduler proposal][proposal], and most of immediate
 new work will likely be happening around it.
 
-[proposal]: TODO
+[proposal]: /draft/bevy-proposal
 
 Since this is a simple static site, discussion of the article is deferred to
-relevant [github PR].
-Alternatively, refer to contact information on the [main page].
+relevant [github PR](TODO).
+Alternatively, refer to contact information on the [main page](/).
 
-[github PR]: TODO
-[main page]: /
