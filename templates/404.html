@@ -1,0 +1,30 @@
+{% extends "index.html" %}
+{% import "post_macros.html" as post_macros %}
+
+$current_url = "$BASE_URL/404.html"
+
+{% block content %}
+<main>
+    <section class="container">
+        <div class="columns is-desktop">
+            <div class="column is-10-desktop is-offset-1-desktop">
+                <article itemscope itemtype="http://schema.org/BlogPosting">
+                    <div class="card article">
+                        <header class="is-bold hero is-primary hero-body">
+                            <h2 class="title" style="text-align:center">
+                                404
+                            </h2>
+                        </header>
+                        <div class="card-content">
+                            <p style="width:100%; text-align:center">
+                                Looks like that's not a valid page.
+                                Return to <a href="/">main page</a>?
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}

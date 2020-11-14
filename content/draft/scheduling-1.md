@@ -1,13 +1,13 @@
 +++
-title = "ECS schedulers, part 1"
-date = 2020-10-31
+title = "ECS scheduler thoughts, part 1"
+date = 2020-11-13
 
 [taxonomies]
-#categories = ["Articles"]
-#tags = ["ECS", "Scheduler", "Rust"]
+#tags = ["ECS", "scheduler", "Rust"]
 +++
 
-Part 1 covers... // TODO
+An overview of the ECS system scheduling problem, the constraints a
+prospective solution should consider, and a pair of algorithm examples.
 
 <!-- more -->
 
@@ -150,10 +150,10 @@ at all.
 One way or another, a sequence of sets of disjoint systems is produced; when
 the schedule is executed, sets are iterated sequentially, and systems within
 them are ran in parallel.
-This can be thought of as a DAG where nodes are the implicit synchronization
-points between the sets, and edges are the systems and connect the points
-in such a way that edges originating in one node all terminate
-in the same other node.
+This can be thought of as a directional acyclic graph where nodes are the
+implicit synchronization points between the sets, and edges are the systems and
+connect the points in such a way that edges originating in one node all
+terminate in the same other node.
 Formally:
 {% katex(block=true) %}
     stat \equiv sched_{static}, \newline
@@ -208,7 +208,8 @@ The feasibility of pure {{katex(body="stat")}} is further undermined by
 requirements of certain kinds of ECS, most notably archetypal ECS - a subtype
 distinct in the way it organizes data internally.
 Without going into specifics: sometimes when the data in such an ECS changes
-it also changes which systems are disjoint.
+it also changes which systems are disjoint (this is what the phrase "world's
+archetypes have changed" in the examples later in the article refers to).
 To address that, the scheduler must partially rebuild its execution graph
 whenever such a change occurs.
 (Technically, it could also ignore this avenue for parallelization and instead
@@ -382,20 +383,168 @@ For example, disjoint systems could be assumed to also be disjoint logically,
 i.e. systems acting on non-related data are assumed to implement non-related
 behaviors and thus don't have any implicit ordering between them.
 
-Naturally, any order relaxing {{katex(body="sched")}} would do should be
+Naturally, any order relaxing a {{katex(body="sched")}} would do should be
 overridden by a conflicting explicit order constraint.
 Inversely, there should be an "escape hatch" that lets users mark pairs of
 systems as independent, regardless of their accessed data, allowing the
 algorithm to schedule them in whatever order.
 
-# Summary and projects
+# Scheduler examples
 
+While concrete parts of scheduling algorithms were hinted at throughout the
+article, a couple of examples should provide a more complete the picture.
 
+Here, algorithms of two crates (libraries) from the Rust ecosystem will serve as
+that: [`bevy_ecs`], part of the [Bevy] engine, and [`yaks`], developed by the
+author.
+They are both built on top of the [`hecs`] ECS library, which is archetypal.
 
-1. ~~Stages should be used to express execution order between groups
-of systems, not individual systems.~~
-2. ~~There should be a mechanism to express optional execution order between
-individual systems in a stage.~~
-3. ~~Systems within a stage should be allowed to run opportunistically, i.e.,
-whenever there are available resources (borrows and a thread) and no
-unsatisfied execution order dependencies.~~
+[`bevy_ecs`]: https://docs.rs/bevy_ecs/
+[Bevy]: https://bevyengine.org/
+[`yaks`]: https://docs.rs/yaks/
+[`hecs`]: https://docs.rs/hecs/
+
+## `bevy_ecs`
+
+The scheduler provided by `bevy_ecs` is what ties all parts of Bevy together:
+it invokes any and all code (written in the form of systems) both the engine and
+the application built with it contain. In addition to owning all the systems,
+this ECS also owns all of the data - both components and resources (data not
+associated with an entity).
+
+It employs stages, with modifying operations generally deferred until the end of
+a stage via the `Commands` resource.
+
+In addition to its scheduled closure, each system also has a "thread-local"
+closure which can be executed "immediately", at any point in the stage, or "at
+next flush", which happens at the end of stage.
+Immediate execution implements thread locality (and enables modification at any
+point within the stage), and next flush execution is used solely to apply the
+deferred modifying operations.
+
+Execution order within a stage is inferred from insertion order and data access,
+with a previously inserted intersecting system assumed to be a dependency of
+later one; i.e.:
+* Systems reading from a location are executed strictly after previously
+inserted systems writing to the same location.
+* Systems writing to a location are executed strictly after previously inserted
+systems reading from or writing to the same location.
+
+As of writing, there is no way to specify explicit dependencies, or relax the
+implicit ones.
+
+The scheduling algorithm performs the following steps for each stage:
+1. If the schedule has been changed, reset cached scheduling data (dependency
+counters, list of thread-local systems).
+2. From all systems of the stage, in order of insertion, select the range of
+systems to operate on this cycle: from the end of last cycle's range, exclusive,
+(or first system, inclusive, if this is the first cycle) to next thread-local
+system (or last system if there are no thread-local systems), inclusive.
+3. If the schedule or world's archetypes have been changed, update systems'
+affected archetypes, recalculate dependencies, reset dependency counters, and
+rebuild execution order, for all thread-agnostic systems in the selected range.
+4. If it hasn't been done yet as part of step 3, reset dependency counters for
+all thread-agnostic systems in the range.
+5. Start every thread-agnostic system in the range by spawning a task that will
+await its dependencies counter reaching zero, execute the system, and signal its
+dependents' counters to decrement upon completion.
+6. If the selected range contains a thread-local system, execute it on the main
+thread with exclusive access to all data, then continue from step 2.
+7. Execute all systems' modification closures on the main thread, in order of
+insertion, with exclusive access to all data.
+
+More details:
+* The process is asynchronous: the coordinating task is non-blocking, allowing
+the scheduler to work as expected even in setups without multiple threads.
+* The library tracks if changes are made to the data it manages, enabling
+implementing, for example, a system that performs its action only on entities
+who had a specific component of theirs modified this frame.
+The tracking is reset at the end of frame; there are plans to implement
+multi-frame tracking as well. 
+* All stages seem to be rebuilt on any change to the schedule, even if it would
+not affect them.
+
+## `yaks`
+
+The scheduler of `yaks` is meant to be maximally composable, with other
+instances of itself and the surrounding application.
+To that end, neither components nor resources are owned by any abstraction
+provided by the crate, instead both are borrowed by the `Executor` (the
+scheduler abstraction) for the duration of schedule execution.
+Systems are implemented in a way that allows them to be easily used as plain
+functions elsewhere in the application.
+
+There are no stages, instead users are encouraged to create several executors
+and invoke them in a sequence.
+Built-in abstraction for deferring modifying operations is not provided, in
+favor of having users implement one, tailored to their use case.
+Thread-local systems are not addressed.
+
+Execution order between two systems is specified by giving a tag (an arbitrary
+type implementing `Sized + Eq + Hash + Debug`) to the first system when
+inserting it, and providing a vector containing said tag when inserting the
+second system.
+No implicit dependencies are inferred.
+
+As of writing, the executor has two distinct "modes", selected automatically
+during its initialization.
+The first, "dispatching", is a heuristic used when all systems are
+statically disjoint (i.e., will never intersect during the entirety of
+executor lifetime) - it bypasses scheduling algorithm and instead starts
+all of the systems at the same time, without any additional checks.
+
+The second, "scheduling", is used in all other cases:
+1. Queue systems that don't have any dependencies to run by putting their
+IDs into the list of queued systems.
+2. Reset every system's unsatisfied dependencies counter.
+If world's archetypes have been changed, the system's affected archetypes are
+updated here as well.
+3. If there are no queued systems and no running systems, exit the algorithm.
+4. For every queued system, if it is disjoint with already running systems,
+add its ID to the list of running systems, and start it by spawning into the
+thread pool a closure that'll execute the system and signal the executor with
+the system's ID upon completion.
+5. Remove IDs of running systems from list of queued systems. 
+6. Wait for at least one signal containing a finished system's ID, storing it
+in a list of just finished systems.
+7. Collect IDs of any other system that may have finished into same list.
+8. For all systems from the just finished list, collect IDs of their
+dependents into a list.
+9. Decrement unsatisfied dependencies count of the dependents, once per mention
+in the list from step 8.
+If the count is zero, queue the dependent to run.
+10. Sort the list of queued systems in order of decreasing amount of dependents.
+11. Continue from step 3.
+
+More details:
+- All lists mentioned are held onto by the executor, to avoid extra allocations.
+- List of systems with no dependencies is populated once, during executor
+initialization, and is sorted in order of decreasing amount of dependents.
+- The algorithm requires at least two threads, with one being reserved for
+coordinating however many worker threads (this will probably change when the
+library moves from [`rayon`] to something like [`switchyard`], enabling
+the use of non-blocking synchronization primitives).
+
+[`rayon`]: https://docs.rs/rayon/
+[`switchyard`]: https://docs.rs/switchyard/
+
+# Final thoughts
+
+Multiprocessor scheduling problem has numerous related works to draw ideas from
+in search of solutions to this subset of it - a potential topic for the possible
+part two.
+Others are new algorithms, either from other crates or developed independently,
+and API design of the scheduler abstraction.
+
+One of the main reasons for this article's existence is serving as a starting
+point for the [new Bevy scheduler proposal][proposal], and most of immediate
+new work will likely be happening around it.
+
+[proposal]: TODO
+
+Since this is a simple static site, discussion of the article is deferred to
+relevant [github PR].
+Alternatively, refer to contact information on the [main page].
+
+[github PR]: TODO
+[main page]: /

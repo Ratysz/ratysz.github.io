@@ -1,0 +1,112 @@
+{% import "post_macros.html" as post_macros %}
+{% import "index_macros.html" as index_macros %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% block head %}
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+    <!-- Enable responsiveness on mobile devices-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+    <title>
+        {% block title %}{{ config.title }}{% endblock title %}
+    </title>
+
+    {{ index_macros::css() }}
+    <!-- This script must follow css -->
+    {% if config.extra.zulma_allow_theme_selection %}
+    <script type="text/javascript" src="{{ get_url(path="js/zulma_switchcss.js") }}"></script>
+    <script>
+        switch_css.init("{{config.base_url | safe}}");
+    </script>
+    {% endif %}
+
+    {% if config.generate_rss %}
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ get_url(path="rss.xml") | safe }}">
+    {% endif %}
+
+    {% if config.build_search_index %}
+    <script defer type="text/javascript" src="{{ get_url(path="elasticlunr.min.js") }}"></script>
+    <script defer type="text/javascript" src="{{ get_url(path="search_index.en.js") }}"></script>
+    {% endif %}
+
+    <script defer src="{{ get_url(path="js/katex.min.js") }}"></script>
+    <script defer src="{{ get_url(path="js/mathtex-script-type.min.js") }}"></script>
+    <script defer src="{{ get_url(path="js/auto-render.min.js") }}"></script>
+    <link rel="stylesheet" href="{{ get_url(path="css/katex.min.css") }}">
+
+    {% block extra_head %}
+    {% endblock extra_head %}
+
+    <noscript>
+        <style>
+            .navbar-menu {
+                display: block;
+            }
+
+            .js-only {
+                display: none;
+            }
+        </style>
+    </noscript>
+    {% endblock head %}
+</head>
+
+<body>
+{% block body%}
+{% block content %}
+<!-- START NAV -->
+{% block header %}
+{{ index_macros::navbar() }}
+{% endblock header %}
+<!-- END NAV -->
+<main class="index">
+    <section class="container">
+        <div class="columns is-desktop">
+            <div class="column is-10-desktop is-offset-1-desktop">
+                <article itemscope itemtype="http://schema.org/BlogPosting">
+                    <div class="card article">
+<header class="is-bold hero is-primary hero-body">
+    <h2 class="title" style="text-align:center">
+        Ratys' website thing
+    </h2>
+</header>
+<div class="card-content">
+    <p>Hello.</p>
+    <br>
+    <p>I'm Alexander Sepity, known as Ratys in most places online.</p>
+    <br>
+    <li><a href="https://discord.gg/yNtPTb2">Game Development in Rust</a>
+        Discord server, ask for Ratys#9591.</li>
+    <li><a href="https://github.com/Ratysz">github</a> profile, has some of my code.</li>
+    <li><a href="https://twitter.com/ratysz">@ratysz</a> on Twitter, for some reason.</li>
+    <li><a href="mailto:alexander.sepity@gmail.com">alexander.sepity@gmail.com</a>,
+        if you have to.</li>
+    <br>
+    <p>You might be looking for one of the buttons on the top right of the page.</p>
+</div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}
+{% block footer %}
+{{ index_macros::footer() }}
+{% endblock footer %}
+
+<script type="text/javascript" src="{{ get_url(path="js/zulma_navbar.js") }}"></script>
+
+    {% if config.build_search_index %}
+    <script type="text/javascript" src="{{ get_url(path="js/zulma_search.js") }}"></script>
+{% endif %}
+
+{% endblock body%}
+</body>
+
+</html>

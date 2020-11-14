@@ -8,18 +8,14 @@ highlight_theme = "material-dark"
 
 compile_sass = true
 
-build_search_index = true
-
 taxonomies = [
-    {name = "categories", paginate_by = 5},
-    {name = "tags", paginate_by = 5},
+    {name = "tags"},
 ]
 
 [extra]
-zulma_title = "web shite"
 zulma_theme = "slate"
 zulma_brand = {text = "Home"}
 zulma_menu = [
-    {url = "$BASE_URL/categories", name = "Categories"},
+    {url = "$BASE_URL/article", name = "Articles"},
     {url = "$BASE_URL/tags", name = "Tags"},
 ]
