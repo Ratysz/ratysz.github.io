@@ -1,9 +1,9 @@
 +++
 title = "ECS scheduler thoughts, part 1"
-date = 2020-11-14
+date = 2020-11-15
 
 [taxonomies]
-#tags = ["ECS", "scheduler", "Rust"]
+tags = ["ECS", "scheduler", "Rust"]
 +++
 
 An overview of the ECS system scheduling problem, the constraints a
