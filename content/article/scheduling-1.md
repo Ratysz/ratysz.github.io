@@ -545,6 +545,7 @@ new work will likely be happening around it.
 [proposal]: https://github.com/bevyengine/bevy/discussions/867
 
 Since this is a simple static site, discussion of the article is deferred to
-relevant [github PR](https://github.com/Ratysz/ratysz.github.io/pull/1).
+relevant [github PR](https://github.com/Ratysz/ratysz.github.io/pull/1) or
+[reddit post](https://www.reddit.com/r/rust/comments/jujamr/ecs_scheduler_thoughts_part_1/).
 Alternatively, refer to contact information on the [main page](/).
 
