@@ -545,6 +545,6 @@ new work will likely be happening around it.
 [proposal]: /draft/bevy-proposal
 
 Since this is a simple static site, discussion of the article is deferred to
-relevant [github PR](TODO).
+relevant [github PR](https://github.com/Ratysz/ratysz.github.io/pull/1).
 Alternatively, refer to contact information on the [main page](/).
 
