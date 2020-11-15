@@ -1,9 +1,9 @@
 +++
 title = "ECS scheduler thoughts, part 1"
-date = 2020-11-14
+date = 2020-11-15
 
 [taxonomies]
-#tags = ["ECS", "scheduler", "Rust"]
+tags = ["ECS", "scheduler", "Rust"]
 +++
 
 An overview of the ECS system scheduling problem, the constraints a
@@ -545,6 +545,6 @@ new work will likely be happening around it.
 [proposal]: /draft/bevy-proposal
 
 Since this is a simple static site, discussion of the article is deferred to
-relevant [github PR](TODO).
+relevant [github PR](https://github.com/Ratysz/ratysz.github.io/pull/1).
 Alternatively, refer to contact information on the [main page](/).
 
