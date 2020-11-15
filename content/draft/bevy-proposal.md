@@ -10,6 +10,7 @@ github.*
 
 The scheduler provided by `bevy_ecs` is good enough, but it could be better:
 more expressive syntax, more features, greater flexibility and maintainability.
+This proposal aims to expand the API, enabling further work on internals.
 
 [Recommended reading](https://ratysz.github.io/article/scheduling-1),
 I will be using the terminology introduced there.
@@ -34,29 +35,31 @@ order or not.
 
 The API should allow using stages independently of the schedule.
 The schedule abstraction itself could even be moved from `bevy_ecs` to the
-engine itself, seeing as it wouldn't be required for stand-alone use.
+engine, seeing as it wouldn't be required for stand-alone use.
 
 So, current vision:
 * Schedule is an ordered collection of stages, its interface deals with adding,
 removing, and mutably accessing stages, as well as running the whole thing,
 which runs the stages sequentially.
 It doesn't care what's going on inside the stages.
-* Stages encapsulate a collection of systems and the scheduling algorithm used
-with them.
+* Stages encapsulate a collection of systems, and an instance of the scheduling
+algorithm used with them.
 Their interface varies between specific stage implementations, but generally
 deals with adding or removing systems, specifying (or un-specifying) execution
 order between them, and running the stage.
-Each stage implementation has its own requirements and makes its own guarantees.
+Each stage implementation has its own requirements and makes its own guarantees
+regarding execution order, strictness of system disjointedness detection, etc.
 
-Current executor should be rewritten as a stage and given an interface to
+The current executor should be rewritten as a stage and given an interface to
 manipulate dependencies, in addition to retaining its current behavior.
 More stages should be implemented, not necessarily as part of `bevy_ecs` -
 their modularity enables external algorithms
 ([example?](https://github.com/Ratysz/bevy_prototype_scheduler)).
 
 (Minor thing from the current implementation: thread-local and modifying systems
-are conflated and intertwined;
-I suspect that detangling the two will greatly improve code readability.)
+are conflated and intertwined.
+I suspect that detangling the two will greatly improve maintainability,
+although that would likely touch more than just the scheduler.)
 
 Questions:
 * How will this play together with scenes, if we do decide to mingle their

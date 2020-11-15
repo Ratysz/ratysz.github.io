@@ -30,8 +30,9 @@ the frame can be referred to as [makespan][makespan] of the set.
 
 [makespan]: https://en.wikipedia.org/wiki/Makespan
 
-The time a single system needs to be done for the frame is usually not known
-beforehand, because it often scales with the data the system operates on.
+The time a single system needs in order to be done for the frame is usually
+not known beforehand, because it usually scales with the data the system
+operates on.
 Said data can change at runtime, often through user input.
 
 For performance's sake - to minimize the makespan - it's sometimes desirable to
@@ -47,13 +48,13 @@ and runs the risk of deadlocking in a naive implementation.
 A more popular solution is to employ a special algorithm - a "scheduler" -
 that queues systems to run in a way that has better utilization of processing
 resources (read: threads, since a thread can be running only one system at
-a time) than running them sequentially, yet doesn't violate data access rules
+a time) than running them sequentially, yet doesn't violate data access rules,
 without the need for locks.
 (In Rust these rules state that data may be changed from only one place
 at a time, and data that may be changed elsewhere cannot be read.)
 The problem of finding such an algorithm is closely related to the
 [multiprocessor scheduling][MPS] problem; finding the optimal schedule for the
-systems is always NP-hard.
+systems, assuming their run times are known, is always NP-hard.
 
 [MPS]: https://en.wikipedia.org/wiki/Multiprocessor_scheduling
 
@@ -163,7 +164,7 @@ Formally:
 {% end %}
 
 Since the run time of a system is usually not known at the point of schedule
-creation, the schedule has to assume that all systems take equally as long.
+creation, the schedule has to assume that all systems take equally long.
 There is an obvious problem: run times are in no way guaranteed to be equal,
 and often independently change during the program's operation.
 This almost inevitably produces a situation where some systems in a disjoint
@@ -241,7 +242,7 @@ If `0` and `1` are started first, `2` can start after both of them finish,
 and `3` can start as soon as `0` finishes; `2` and `3` can run in parallel.
 
 If `0` and `3` are started first, `1` can start after `3` finishes, and `2`
-can start after `0` finishes, but they can't run in parallel.
+can start after `0` finishes, but `1` and `2` can't run in parallel.
 
 This implies that a naive {{katex(body="dyn")}} implementation cannot be said
 to always produce an optimal schedule.
@@ -392,7 +393,7 @@ algorithm to schedule them in whatever order.
 # Scheduler examples
 
 While concrete parts of scheduling algorithms were hinted at throughout the
-article, a couple of examples should provide a more complete the picture.
+article, a couple of examples should provide a more complete picture.
 
 Here, algorithms of two crates (libraries) from the Rust ecosystem will serve as
 that: [`bevy_ecs`], part of the [Bevy] engine, and [`yaks`], developed by the
@@ -407,10 +408,11 @@ They are both built on top of the [`hecs`] ECS library, which is archetypal.
 ## `bevy_ecs`
 
 The scheduler provided by `bevy_ecs` is what ties all parts of Bevy together:
-it invokes any and all code (written in the form of systems) both the engine and
-the application built with it contain. In addition to owning all the systems,
-this ECS also owns all of the data - both components and resources (data not
-associated with an entity).
+it invokes any and all code (written in the form of systems) both the engine
+and the application built with it contain.
+In addition to owning all the systems, this ECS also owns all of the data - both
+components (data belonging to entities) and resources (data not associated
+with any entity).
 
 It employs stages, with modifying operations generally deferred until the end of
 a stage via the `Commands` resource.
@@ -434,8 +436,8 @@ As of writing, there is no way to specify explicit dependencies, or relax the
 implicit ones.
 
 The scheduling algorithm performs the following steps for each stage:
-1. If the schedule has been changed, reset cached scheduling data (dependency
-counters, list of thread-local systems).
+1. If the schedule has been changed, reset cached scheduling data (lists of
+dependency counters, list of thread-local systems' indices, etc).
 2. From all systems of the stage, in order of insertion, select the range of
 systems to operate on this cycle: from the end of last cycle's range, exclusive,
 (or first system, inclusive, if this is the first cycle) to next thread-local
@@ -458,7 +460,7 @@ More details:
 the scheduler to work as expected even in setups without multiple threads.
 * The library tracks if changes are made to the data it manages, enabling
 implementing, for example, a system that performs its action only on entities
-who had a specific component of theirs modified this frame.
+that had a specific component of theirs modified this frame.
 The tracking is reset at the end of frame; there are plans to implement
 multi-frame tracking as well. 
 * All stages seem to be rebuilt on any change to the schedule, even if it would
@@ -467,16 +469,16 @@ not affect them.
 ## `yaks`
 
 The scheduler of `yaks` is meant to be maximally composable, with other
-instances of itself and the surrounding application.
+instances of itself, and the surrounding application.
 To that end, neither components nor resources are owned by any abstraction
-provided by the crate, instead both are borrowed by the `Executor` (the
+provided by the crate, instead, both are borrowed by the `Executor` (the
 scheduler abstraction) for the duration of schedule execution.
 Systems are implemented in a way that allows them to be easily used as plain
 functions elsewhere in the application.
 
-There are no stages, instead users are encouraged to create several executors
-and invoke them in a sequence.
-Built-in abstraction for deferring modifying operations is not provided, in
+There are no stages, users are encouraged to create several executors and
+invoke them in a sequence.
+A built-in abstraction for deferring modifying operations is not provided, in
 favor of having users implement one, tailored to their use case.
 Thread-local systems are not addressed.
 
@@ -496,8 +498,8 @@ all of the systems at the same time, without any additional checks.
 The second, "scheduling", is used in all other cases:
 1. Queue systems that don't have any dependencies to run by putting their
 IDs into the list of queued systems.
-2. Reset every system's unsatisfied dependencies counter.
-If world's archetypes have been changed, the system's affected archetypes are
+2. For each system, reset unsatisfied dependencies counter;
+if world's archetypes have been changed, the system's affected archetypes are
 updated here as well.
 3. If there are no queued systems and no running systems, exit the algorithm.
 4. For every queued system, if it is disjoint with already running systems,
@@ -510,9 +512,9 @@ in a list of just finished systems.
 7. Collect IDs of any other system that may have finished into same list.
 8. For all systems from the just finished list, collect IDs of their
 dependents into a list.
-9. Decrement unsatisfied dependencies count of the dependents, once per mention
-in the list from step 8.
-If the count is zero, queue the dependent to run.
+9. Decrement unsatisfied dependencies counter of the dependents, once per
+mention in the list from step 8.
+If the counter reached zero, queue the dependent to run.
 10. Sort the list of queued systems in order of decreasing amount of dependents.
 11. Continue from step 3.
 
@@ -533,7 +535,7 @@ the use of non-blocking synchronization primitives).
 Multiprocessor scheduling problem has numerous related works to draw ideas from
 in search of solutions to this subset of it - a potential topic for the possible
 part two.
-Others are new algorithms, either from other crates or developed independently,
+Others are new algorithms (from existing crates or developed independently),
 and API design of the scheduler abstraction.
 
 One of the main reasons for this article's existence is serving as a starting
