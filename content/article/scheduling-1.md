@@ -542,7 +542,7 @@ One of the main reasons for this article's existence is serving as a starting
 point for the [new Bevy scheduler proposal][proposal], and most of immediate
 new work will likely be happening around it.
 
-[proposal]: /draft/bevy-proposal
+[proposal]: https://github.com/bevyengine/bevy/discussions/867
 
 Since this is a simple static site, discussion of the article is deferred to
 relevant [github PR](https://github.com/Ratysz/ratysz.github.io/pull/1).
