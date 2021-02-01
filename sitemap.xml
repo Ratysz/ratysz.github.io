@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://ratysz.github.io/</loc>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/article/</loc>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/article/scheduling-1/</loc>
+        <lastmod>2020-11-15</lastmod>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/draft/</loc>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/tags/</loc>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/tags/ecs/</loc>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/tags/rust/</loc>
+    </url>
+    <url>
+        <loc>https://ratysz.github.io/tags/scheduler/</loc>
+    </url>
+</urlset>

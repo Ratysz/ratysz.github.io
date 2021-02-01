@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+    <!-- Enable responsiveness on mobile devices-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+    <title>
+        Ratys&#x27; website thing
+    </title>
+
+    
+
+<link id="slate" class="stylesheet" rel="stylesheet"
+    href="https:&#x2F;&#x2F;ratysz.github.io&#x2F;slate.css" />
+
+
+    <!-- This script must follow css -->
+    
+
+    
+
+    
+
+    <script defer src="https:&#x2F;&#x2F;ratysz.github.io&#x2F;js&#x2F;katex.min.js"></script>
+    <script defer src="https:&#x2F;&#x2F;ratysz.github.io&#x2F;js&#x2F;mathtex-script-type.min.js"></script>
+    <script defer src="https:&#x2F;&#x2F;ratysz.github.io&#x2F;js&#x2F;auto-render.min.js"></script>
+    <link rel="stylesheet" href="https:&#x2F;&#x2F;ratysz.github.io&#x2F;css&#x2F;katex.min.css">
+
+    
+    
+
+    <noscript>
+        <style>
+            .navbar-menu {
+                display: block;
+            }
+
+            .js-only {
+                display: none;
+            }
+        </style>
+    </noscript>
+    
+</head>
+
+<body>
+
+
+<!-- START NAV -->
+
+
+
+
+<header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                
+                <a class="navbar-item" href="/">
+                    
+                    <span>Home</span>
+                    
+                </a>
+                
+                <span class="navbar-burger burger" data-target="navbarMenu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </div>
+            <div id="navbarMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    
+                    
+                    
+                    
+                    <a itemprop="url"
+                        class="navbar-item "
+                        href="https:&#x2F;&#x2F;ratysz.github.io&#x2F;article">
+                        <span itemprop="name">Articles
+                        </span>
+                    </a>
+                    
+                    
+                    
+                    <a itemprop="url"
+                        class="navbar-item "
+                        href="https:&#x2F;&#x2F;ratysz.github.io&#x2F;tags">
+                        <span itemprop="name">Tags
+                        </span>
+                    </a>
+                    
+                    
+
+                    
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
+
+
+
+
+<!-- END NAV -->
+<main>
+    <section class="container">
+        <div class="columns is-desktop">
+            <div class="column is-10-desktop is-offset-1-desktop">
+                <article itemscope itemtype="http://schema.org/BlogPosting">
+                    <div class="card article">
+                        <div class="card-content">
+                            
+<header>
+    <div class="has-text-centered">
+        <a href="https://ratysz.github.io/article/scheduling-1/">
+            <p class="title article-title">ECS scheduler thoughts, part 1
+            </p>
+        </a>
+        <div class="tags has-addons level-item">
+            <span class="tag is-rounded">2020-11-15</span>
+                       
+            <span class="tag is-rounded">
+<svg class="i-clock" viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentcolor" stroke-linecap="round"
+    stroke-linejoin="round" stroke-width="6.25%">
+    <circle cx="16" cy="16" r="14" />
+    <path d="M16 8 L16 16 20 20" />
+</svg>
+<span>&nbsp;21 minute read</span>
+</span>
+        </div>
+    </div>
+</header>
+
+                            <div itemprop="articleBody" class="content article-body">
+                                <p>An overview of the ECS system scheduling problem, the constraints a
+prospective solution should consider, and a pair of algorithm examples.</p>
+<span id="continue-reading"></span>
+<p><em>This article is written within the context of Rust language ecosystem and
+describes concepts mostly relevant to ECS (entity-component-system).
+However, no knowledge of the ECS paradigm, Rust's ecosystem, or even Rust
+language is necessary for understanding its ideas and conclusions.</em></p>
+<h1 id="what-is-a-scheduler"><a class="zola-anchor" href="#what-is-a-scheduler"
+   aria-label="Anchor link for: what-is-a-scheduler" style="opacity:0.2">
+    
+    §
+    
+</a>What is a scheduler?</h1>
+<p>Behavior of an ECS program is described by one or several &quot;systems&quot; -
+the &quot;S&quot; part of ECS - functions that operate on the shared data contained within
+the &quot;EC&quot; part.
+ECS paradigm is used almost exclusively in the context of game and engine
+programming, with some set of systems the program contains normally running
+every &quot;frame&quot; - a pre-determined time interval, not necessarily tied to the
+video frame rate.
+The amount of time required for all systems in a set to finish their work for
+the frame can be referred to as <a href="https://en.wikipedia.org/wiki/Makespan">makespan</a> of the set.</p>
+<p>The time a single system needs in order to be done for the frame is usually
+not known beforehand, because it usually scales with the data the system
+operates on.
+Said data can change at runtime, often through user input.</p>
+<p>For performance's sake - to minimize the makespan - it's sometimes desirable to
+have several of these systems executed at the same time, in parallel.
+In practice, however, systems often operate on intersecting sets of data,
+which necessitates the use of some kind of synchronization mechanism.</p>
+<p>Said mechanism can't be a simple lock over the shared data, since that would
+force the execution of systems to be sequential.
+It can be several orthogonal locks, but that's not the most performant approach,
+and runs the risk of deadlocking in a naive implementation.</p>
+<p>A more popular solution is to employ a special algorithm - a &quot;scheduler&quot; -
+that queues systems to run in a way that has better utilization of processing
+resources (read: threads, since a thread can be running only one system at
+a time) than running them sequentially, yet doesn't violate data access rules,
+without the need for locks.
+(In Rust these rules state that data may be changed from only one place
+at a time, and data that may be changed elsewhere cannot be read.)
+The problem of finding such an algorithm is closely related to the
+<a href="https://en.wikipedia.org/wiki/Multiprocessor_scheduling">multiprocessor scheduling</a> problem; finding the optimal schedule for the
+systems, assuming their run times are known, is always NP-hard.</p>
+<p>For an ECS program to be schedulable it needs to be executable at least
+sequentially, i.e. whatever constraints on system order execution it might have
+must not contain cycles of dependencies - the systems must form an acyclic
+<a href="https://en.wikipedia.org/wiki/Disjunctive_graph">disjunctive graph</a>.
+Execution order will be elaborated upon further in the article; for now, the
+set <script type="math/tex">\Pi</script> will be said to contain all such programs:</p>
+<script type="math/tex;mode=display">\Pi = \{ P | P \text{ is executable} \}.</script>
+<p>An ECS program <script type="math/tex">P \in \Pi</script> consisting of <script type="math/tex">n</script>
+systems is further defined as such:</p>
+<script type="math/tex;mode=display">P \stackrel{\mathrm{def}}{=} \{s_0, s_1, ..., s_n |
+    s_i \stackrel{\mathrm{def}}{=} (t_i, d_i) \},</script>
+<p>where <script type="math/tex">s_i</script> is an individual system, <script type="math/tex">t_i</script>
+is the time it needs to complete its work, and <script type="math/tex">d_i</script>
+is the set of data it operates on. Then, a scheduling
+algorithm <script type="math/tex">sched</script> is a mapping of <script type="math/tex">P</script> to
+some schedule <script type="math/tex">S</script>:</p>
+<script type="math/tex;mode=display">sched: \forall P \in \Pi, P \stackrel{sched}{\mapsto} S.</script>
+<p>The makespan <script type="math/tex">M_{opt}</script> is the optimal makespan for a
+given <script type="math/tex">P</script>, <script type="math/tex">M_S</script> is the makespan
+of <script type="math/tex">S</script>, and <script type="math/tex">M_{seq}</script> is the practical
+worst-case makespan of executing all systems of <script type="math/tex">P</script> in
+sequence:</p>
+<script type="math/tex;mode=display">M_{seq} = \sum_{i=0}^{n} t_i.</script>
+<p>The problem then can be stated as finding</p>
+<script type="math/tex;mode=display">sched: \forall P \in \Pi, P \stackrel{sched}{\mapsto} S,
+    M_S \le M_{seq}, M_S \to M_{opt},</script>
+<p>and, ideally,</p>
+<script type="math/tex;mode=display">sched \notin \text{NP}.</script>
+<p>In this article, two systems are described as disjoint if running them in
+parallel would not violate access rules,
+i.e. <script type="math/tex">
+{s_i, s_j} \in P, i \mathrel{\char8800} j,
+d_i \cap d_j = \emptyset
+</script>.
+If the rules would be violated, the systems are intersecting,
+i.e. <script type="math/tex">
+{s_i, s_j} \in P, i \mathrel{\char8800} j,
+d_i \cap d_j \mathrel{\char8800} \emptyset
+</script>.</p>
+<p>Disjointedness is not necessarily transitive. Example:</p>
+<ul>
+<li>system <code>0</code> with required access to <code>A</code></li>
+<li>system <code>1</code> with <code>B</code></li>
+<li>system <code>2</code> with <code>A</code></li>
+</ul>
+<p>Systems <code>0</code> and <code>1</code> are disjoint, systems <code>1</code> and <code>2</code> are disjoint, yet <code>0</code> and
+<code>2</code> intersect; or, <script type="math/tex">
+d_0 \cap d_1 = \emptyset,
+d_1 \cap d_2 = \emptyset,
+d_0 \cap d_2 \mathrel{\char8800} \emptyset
+</script>.</p>
+<p>Likewise, intersection is also not necessarily transitive. Example:</p>
+<ul>
+<li>system <code>0</code> with required access to <code>A</code></li>
+<li>system <code>1</code> with <code>A</code> and <code>B</code></li>
+<li>system <code>2</code> with <code>B</code></li>
+</ul>
+<p>Systems <code>0</code> and <code>1</code> intersect, systems <code>1</code> and <code>2</code> intersect, yet <code>0</code> and <code>2</code>
+are disjoint; or, <script type="math/tex">
+d_0 \cap d_1 \mathrel{\char8800} \emptyset,
+d_1 \cap d_2 \mathrel{\char8800} \emptyset,
+d_0 \cap d_2 = \emptyset
+</script>.</p>
+<h1 id="static-schedule"><a class="zola-anchor" href="#static-schedule"
+   aria-label="Anchor link for: static-schedule" style="opacity:0.2">
+    
+    §
+    
+</a>Static schedule</h1>
+<p>The first instinct is to generate an execution schedule once, when the scheduler
+is first defined and populated.
+Even if doing so is NP-hard, it wouldn't be a constant cost, seeing as changes
+to <script type="math/tex">P</script> are comparatively rare in practice, if there are any
+at all.</p>
+<p>One way or another, a sequence of sets of disjoint systems is produced; when
+the schedule is executed, sets are iterated sequentially, and systems within
+them are ran in parallel.
+This can be thought of as a directional acyclic graph where nodes are the
+implicit synchronization points between the sets, and edges are the systems and
+connect the points in such a way that edges originating in one node all
+terminate in the same other node.
+Formally:</p>
+<script type="math/tex;mode=display">stat \equiv sched_{static}, \newline
+    stat : \forall P \in \Pi, P \stackrel{stat}{\mapsto} S_{stat}, \newline
+    S_{stat} = \{ \sigma | \sigma = \{ s |  \forall {s_i, s_j} \in \sigma,
+    i \mathrel{\char8800} j, d_i \cap d_j = \emptyset \} \}.</script>
+<p>Since the run time of a system is usually not known at the point of schedule
+creation, the schedule has to assume that all systems take equally long.
+There is an obvious problem: run times are in no way guaranteed to be equal,
+and often independently change during the program's operation.
+This almost inevitably produces a situation where some systems in a disjoint
+set take longer than the rest, reducing average resource utilization.</p>
+<p>Assuming sufficient processing resources (all systems in a
+set <script type="math/tex">\sigma</script> can run in parallel at full performance),
+the best-case makespan <script type="math/tex">M_{stat}</script> of <script type="math/tex">S_{stat}</script>
+is the sum of <script type="math/tex">t</script> of the longest-running system in each
+disjoint set:</p>
+<script type="math/tex;mode=display">M_{stat} = \sum_{\sigma \in S_{stat}} \max_{s_i \in \sigma}(t_i).</script>
+<p>Trivially, if all systems of <script type="math/tex">P</script> are disjoint:</p>
+<script type="math/tex;mode=display">\forall {s_i, s_j} \in P, i \mathrel{\char8800} j,
+    d_i \cap d_j = \emptyset, \newline
+    S_{stat} \equiv S_{par}, M_{par} = \max_{s_i \in P}(t_i) \approx M_{opt}.</script>
+<p>(Naturally, all correct scheduling algorithms should be able to
+produce <script type="math/tex">S_{par}</script> when applied to such <script type="math/tex">P</script>.)</p>
+<p>The first idea for alleviating the unknown time problem is to make the
+time known.</p>
+<p>The scheduler could ask its user to provide hints for the system run time,
+be it manually, or via some automated benchmark framework.
+However, anticipating all factors that might influence the run time is
+impractical for most projects, so this approach would be feasible only for
+programs with well-behaved, predictable time coefficients.</p>
+<p>Alternatively, the scheduler could collect the run times of systems during
+execution, picking up on any changes, and adjusting the schedule to maximize
+utilization on the fly (making &quot;static&quot; a misnomer).
+Potential volatility of the run time could thwart this approach: if a system
+is recorded to take some amount of time to finish during this frame, it's not
+guaranteed to not take a vastly different amount next frame, when the
+measurement is actually used (in practice, persistently high volatility
+between frames is uncommon).</p>
+<p>The feasibility of pure <script type="math/tex">stat</script> is further undermined by
+requirements of certain kinds of ECS, most notably archetypal ECS - a subtype
+distinct in the way it organizes data internally.
+Without going into specifics: sometimes when the data in such an ECS changes
+it also changes which systems are disjoint (this is what the phrase &quot;world's
+archetypes have changed&quot; in the examples later in the article refers to).
+To address that, the scheduler must partially rebuild its execution graph
+whenever such a change occurs.
+(Technically, it could also ignore this avenue for parallelization and instead
+rely only on statically provable disjointedness; however, that still leaves it
+with the unknown time problem.)</p>
+<h1 id="dynamic-schedule"><a class="zola-anchor" href="#dynamic-schedule"
+   aria-label="Anchor link for: dynamic-schedule" style="opacity:0.2">
+    
+    §
+    
+</a>Dynamic &quot;schedule&quot;</h1>
+<p>The idea of tweaking the schedule on the fly can be taken much further:
+a scheduler could retain no static execution graph at all.</p>
+<p>Such <script type="math/tex">dyn \equiv sched_{dynamic}</script> would, instead, start
+execution of whichever system, then find another one that is disjoint with
+the one now running, then another that is disjoint with the two now running...
+Once no systems can be started the scheduler simply waits for one of them to
+finish; as soon as that happens, it checks again if more systems can now start.</p>
+<p>This eliminates the biggest problem stemming from unknown run time of systems:
+there are no implicit synchronization points, systems start as soon as
+resources are available (access and threads).</p>
+<p>However, the order in which systems start matters. Example:</p>
+<ul>
+<li>systems <code>0</code>, <code>1</code>, <code>2</code>, and <code>3</code></li>
+<li><code>2</code> intersects <code>0</code> and <code>1</code></li>
+<li><code>3</code> intersects <code>1</code></li>
+</ul>
+<p>If <code>0</code> and <code>1</code> are started first, <code>2</code> can start after both of them finish,
+and <code>3</code> can start as soon as <code>0</code> finishes; <code>2</code> and <code>3</code> can run in parallel.</p>
+<p>If <code>0</code> and <code>3</code> are started first, <code>1</code> can start after <code>3</code> finishes, and <code>2</code>
+can start after <code>0</code> finishes, but <code>1</code> and <code>2</code> can't run in parallel.</p>
+<p>This implies that a naive <script type="math/tex">dyn</script> implementation cannot be said
+to always produce an optimal schedule.</p>
+<h1 id="practical-considerations"><a class="zola-anchor" href="#practical-considerations"
+   aria-label="Anchor link for: practical-considerations" style="opacity:0.2">
+    
+    §
+    
+</a>Practical considerations</h1>
+<p>An important but not yet elaborated upon property of
+any <script type="math/tex">sched</script> can be gleaned from its definition: it needs to
+work for all <script type="math/tex">P \in \Pi</script>.
+In practice, these programs often impose additional requirements, which may
+narrow the search space (the amount of valid schedules) the algorithm has to
+contend with by constraining some of their systems to certain positions in the
+schedule.</p>
+<p>While these constraints may reduce the running time
+of <script type="math/tex">sched</script> itself, reducing the search space can potentially
+exclude the optimal schedule, which, coupled with the fact that no constraint
+can ever increase the search space, means that <script type="math/tex">M_{opt}</script> is
+either increased or not affected by any given constraint.</p>
+<h2 id="thread-local-systems"><a class="zola-anchor" href="#thread-local-systems"
+   aria-label="Anchor link for: thread-local-systems" style="opacity:0.2">
+    
+    §§
+    
+</a>Thread-local systems</h2>
+<p>Some systems may require being executed on the thread that defined them, due to
+some of the system's internal data being thread-local (in Rust terms, <code>!Send</code>
+and/or <code>!Sync</code>, depending on mutability of systems in a given implementation).</p>
+<p>This requirement does not forbid parallelization: thread-agnostic systems (or
+even systems local to different threads) may still run in parallel on other
+threads.</p>
+<p>While scheduling thread-local systems, it is only necessary to consider them in
+the context of their threads - an obvious constraint.
+The makespan of a program containing such systems has an additional lower
+bound - it cannot be less than the greatest sum of execution time of systems
+local to one thread:</p>
+<script type="math/tex;mode=display">M_{opt} \ge \max_{T_i \in P}(\sum_{s_j \in T_i} t_j),</script>
+<p>where <script type="math/tex">T_i</script> is a set of all <script type="math/tex">s \in P</script> local to
+thread <script type="math/tex">i</script>.</p>
+<h2 id="thread-local-data"><a class="zola-anchor" href="#thread-local-data"
+   aria-label="Anchor link for: thread-local-data" style="opacity:0.2">
+    
+    §§
+    
+</a>Thread-local data</h2>
+<p>Some of the data managed by the ECS may only be accessed by its defining thread
+(<code>!Sync</code> for strictly immutable data, otherwise  <code>!Send</code>).
+This case is similar to thread-local systems, differing in one key way:
+the thread-local data can be shared between several systems.</p>
+<p>However, it's impossible to run those systems in parallel: since such data can
+be accessed from only one thread, and a thread can run only one system
+at a time, only one system can be using the data at any given time.
+Therefore, all systems that access thread-local data are effectively
+thread-local systems.</p>
+<p>Systems that access thread-local data that belongs to several different threads
+are impossible to execute, and <script type="math/tex">P \notin \Pi</script> for
+any <script type="math/tex">P</script> that contains such systems.</p>
+<h2 id="modifying-data-access"><a class="zola-anchor" href="#modifying-data-access"
+   aria-label="Anchor link for: modifying-data-access" style="opacity:0.2">
+    
+    §§
+    
+</a>Modifying data access</h2>
+<p>Some operations performed by a system may modify the entirety of shared data
+in such a way that any active views into it will become invalid, e.g. inserting
+new entities or deleting entities - this modifies the collection of entities,
+which is not correct to do while the collection is being iterated (which
+is the most common access pattern in ECS).
+Such operations will be referred to as modifying, and systems that perform
+modifying operations will be referred to as modifying systems.</p>
+<p>One way to address the modifying systems is to give any such system exclusive
+access to entirety of shared data (i.e., <code>&amp;mut World</code>), forbidding it to run
+concurrently with any other system.
+A <script type="math/tex">stat</script> would then place that system into its own
+exclusive <script type="math/tex">\sigma</script>;
+a <script type="math/tex">dyn</script> would have to effectively introduce an implicit
+synchronisation point.
+This is not the same as splitting <script type="math/tex">P</script> in two: the algorithm is
+still free to place any systems before or after the modifying one, while
+splitting would constrain all systems to their respective half.</p>
+<p>Alternatively, modifying operations could be cached and performed at the end
+of schedule, when it's guaranteed that no systems are running.
+Unlike the one described earlier, this approach gives an important property
+to the operations: they will happen deterministically, at an obvious
+point in the schedule.</p>
+<h2 id="stages"><a class="zola-anchor" href="#stages"
+   aria-label="Anchor link for: stages" style="opacity:0.2">
+    
+    §§
+    
+</a>Stages</h2>
+<p>Certain (common in practice) ECS programs can be uniquely split into
+sub-programs, here referred to as stages: all systems of a stage have to be
+executed before any systems of a subsequent stage.</p>
+<p>To schedule any such program a <script type="math/tex">sched</script> only needs to consider
+each individual stage on its own, greatly reducing the search space.
+Each stage is, effectively, an individual ECS program.</p>
+<p>Stages pair well with caching modifying operations: end of a stage can be used
+to apply the operations, allowing the next stage to, for example, access new
+entities created by the previous one.</p>
+<h2 id="explicit-execution-order"><a class="zola-anchor" href="#explicit-execution-order"
+   aria-label="Anchor link for: explicit-execution-order" style="opacity:0.2">
+    
+    §§
+    
+</a>Explicit execution order</h2>
+<p>In some cases it's necessary to have an explicit execution order between two
+individual systems.
+A system might be processing events generated in another system - not ensuring
+that the consumer runs after the producer may lead to one frame of delay in the
+event resolution; if there's a whole chain of systems depending on each other's
+output, the worst case for the delay will be as many frames as there are systems
+in said chain.</p>
+<p>A <script type="math/tex">stat</script> can address ordering by sorting a dependent system into
+a <script type="math/tex">\sigma</script> that is executed after those containing its
+dependencies.</p>
+<p>A <script type="math/tex">dyn</script> would start only the systems that have all their
+dependencies satisfied.
+It could maintain a list of such systems, updating that whenever a system with
+dependents finishes; or, it could make the systems wait until they've received
+an amount of signals equal to the number of their dependencies, with every
+system that finishes signalling its dependents.</p>
+<p>Stages can be leveraged here, too: much like <script type="math/tex">stat</script> does
+automatically, the user could insert a dependent system into a previous stage.
+This, however, is a stronger constraint, as it effectively introduces explicit
+execution order between the dependent and all systems of subsequent stages.</p>
+<h2 id="implicit-execution-order"><a class="zola-anchor" href="#implicit-execution-order"
+   aria-label="Anchor link for: implicit-execution-order" style="opacity:0.2">
+    
+    §§
+    
+</a>Implicit execution order</h2>
+<p>Another order-related constraint can be sourced not from the properties of a
+given <script type="math/tex">P</script>, but, rather, those of the API of the ECS library:
+when populating a schedule, systems are necessarily inserted in a sequence
+(whether explicitly or effectively, when gathering them from all sources into a
+single collection), and it could be quite intuitive if execution order reflected
+the insertion order.</p>
+<p>However, such implicit ordering would remove any and all parallel execution of
+systems, unless <script type="math/tex">sched</script> makes some sort of order-relaxing
+assumptions.
+For example, disjoint systems could be assumed to also be disjoint logically,
+i.e. systems acting on non-related data are assumed to implement non-related
+behaviors and thus don't have any implicit ordering between them.</p>
+<p>Naturally, any order relaxing a <script type="math/tex">sched</script> would do should be
+overridden by a conflicting explicit order constraint.
+Inversely, there should be an &quot;escape hatch&quot; that lets users mark pairs of
+systems as independent, regardless of their accessed data, allowing the
+algorithm to schedule them in whatever order.</p>
+<h1 id="scheduler-examples"><a class="zola-anchor" href="#scheduler-examples"
+   aria-label="Anchor link for: scheduler-examples" style="opacity:0.2">
+    
+    §
+    
+</a>Scheduler examples</h1>
+<p>While concrete parts of scheduling algorithms were hinted at throughout the
+article, a couple of examples should provide a more complete picture.</p>
+<p>Here, algorithms of two crates (libraries) from the Rust ecosystem will serve as
+that: <a href="https://docs.rs/bevy_ecs/"><code>bevy_ecs</code></a>, part of the <a href="https://bevyengine.org/">Bevy</a> engine, and <a href="https://docs.rs/yaks/"><code>yaks</code></a>, developed by the
+author.
+They are both built on top of the <a href="https://docs.rs/hecs/"><code>hecs</code></a> ECS library, which is archetypal.</p>
+<h2 id="bevy-ecs"><a class="zola-anchor" href="#bevy-ecs"
+   aria-label="Anchor link for: bevy-ecs" style="opacity:0.2">
+    
+    §§
+    
+</a><code>bevy_ecs</code></h2>
+<p>The scheduler provided by <code>bevy_ecs</code> is what ties all parts of Bevy together:
+it invokes any and all code (written in the form of systems) both the engine
+and the application built with it contain.
+In addition to owning all the systems, this ECS also owns all of the data - both
+components (data belonging to entities) and resources (data not associated
+with any entity).</p>
+<p>It employs stages, with modifying operations generally deferred until the end of
+a stage via the <code>Commands</code> resource.</p>
+<p>In addition to its scheduled closure, each system also has a &quot;thread-local&quot;
+closure which can be executed &quot;immediately&quot;, at any point in the stage, or &quot;at
+next flush&quot;, which happens at the end of stage.
+Immediate execution implements thread locality (and enables modification at any
+point within the stage), and next flush execution is used solely to apply the
+deferred modifying operations.</p>
+<p>Execution order within a stage is inferred from insertion order and data access,
+with a previously inserted intersecting system assumed to be a dependency of
+later one; i.e.:</p>
+<ul>
+<li>Systems reading from a location are executed strictly after previously
+inserted systems writing to the same location.</li>
+<li>Systems writing to a location are executed strictly after previously inserted
+systems reading from or writing to the same location.</li>
+</ul>
+<p>As of writing, there is no way to specify explicit dependencies, or relax the
+implicit ones.</p>
+<p>The scheduling algorithm performs the following steps for each stage:</p>
+<ol>
+<li>If the schedule has been changed, reset cached scheduling data (lists of
+dependency counters, list of thread-local systems' indices, etc).</li>
+<li>From all systems of the stage, in order of insertion, select the range of
+systems to operate on this cycle: from the end of last cycle's range, exclusive,
+(or first system, inclusive, if this is the first cycle) to next thread-local
+system (or last system if there are no thread-local systems), inclusive.</li>
+<li>If the schedule or world's archetypes have been changed, update systems'
+affected archetypes, recalculate dependencies, reset dependency counters, and
+rebuild execution order, for all thread-agnostic systems in the selected range.</li>
+<li>If it hasn't been done yet as part of step 3, reset dependency counters for
+all thread-agnostic systems in the range.</li>
+<li>Start every thread-agnostic system in the range by spawning a task that will
+await its dependencies counter reaching zero, execute the system, and signal its
+dependents' counters to decrement upon completion.</li>
+<li>If the selected range contains a thread-local system, execute it on the main
+thread with exclusive access to all data, then continue from step 2.</li>
+<li>Execute all systems' modification closures on the main thread, in order of
+insertion, with exclusive access to all data.</li>
+</ol>
+<p>More details:</p>
+<ul>
+<li>The process is asynchronous: the coordinating task is non-blocking, allowing
+the scheduler to work as expected even in setups without multiple threads.</li>
+<li>The library tracks if changes are made to the data it manages, enabling
+implementing, for example, a system that performs its action only on entities
+that had a specific component of theirs modified this frame.
+The tracking is reset at the end of frame; there are plans to implement
+multi-frame tracking as well. </li>
+<li>All stages seem to be rebuilt on any change to the schedule, even if it would
+not affect them.</li>
+</ul>
+<h2 id="yaks"><a class="zola-anchor" href="#yaks"
+   aria-label="Anchor link for: yaks" style="opacity:0.2">
+    
+    §§
+    
+</a><code>yaks</code></h2>
+<p>The scheduler of <code>yaks</code> is meant to be maximally composable, with other
+instances of itself, and the surrounding application.
+To that end, neither components nor resources are owned by any abstraction
+provided by the crate, instead, both are borrowed by the <code>Executor</code> (the
+scheduler abstraction) for the duration of schedule execution.
+Systems are implemented in a way that allows them to be easily used as plain
+functions elsewhere in the application.</p>
+<p>There are no stages, users are encouraged to create several executors and
+invoke them in a sequence.
+A built-in abstraction for deferring modifying operations is not provided, in
+favor of having users implement one, tailored to their use case.
+Thread-local systems are not addressed.</p>
+<p>Execution order between two systems is specified by giving a tag (an arbitrary
+type implementing <code>Sized + Eq + Hash + Debug</code>) to the first system when
+inserting it, and providing a vector containing said tag when inserting the
+second system.
+No implicit dependencies are inferred.</p>
+<p>As of writing, the executor has two distinct &quot;modes&quot;, selected automatically
+during its initialization.
+The first, &quot;dispatching&quot;, is a heuristic used when all systems are
+statically disjoint (i.e., will never intersect during the entirety of
+executor lifetime) - it bypasses scheduling algorithm and instead starts
+all of the systems at the same time, without any additional checks.</p>
+<p>The second, &quot;scheduling&quot;, is used in all other cases:</p>
+<ol>
+<li>Queue systems that don't have any dependencies to run by putting their
+IDs into the list of queued systems.</li>
+<li>For each system, reset unsatisfied dependencies counter;
+if world's archetypes have been changed, the system's affected archetypes are
+updated here as well.</li>
+<li>If there are no queued systems and no running systems, exit the algorithm.</li>
+<li>For every queued system, if it is disjoint with already running systems,
+add its ID to the list of running systems, and start it by spawning into the
+thread pool a closure that'll execute the system and signal the executor with
+the system's ID upon completion.</li>
+<li>Remove IDs of running systems from list of queued systems. </li>
+<li>Wait for at least one signal containing a finished system's ID, storing it
+in a list of just finished systems.</li>
+<li>Collect IDs of any other system that may have finished into same list.</li>
+<li>For all systems from the just finished list, collect IDs of their
+dependents into a list.</li>
+<li>Decrement unsatisfied dependencies counter of the dependents, once per
+mention in the list from step 8.
+If the counter reached zero, queue the dependent to run.</li>
+<li>Sort the list of queued systems in order of decreasing amount of dependents.</li>
+<li>Continue from step 3.</li>
+</ol>
+<p>More details:</p>
+<ul>
+<li>All lists mentioned are held onto by the executor, to avoid extra allocations.</li>
+<li>List of systems with no dependencies is populated once, during executor
+initialization, and is sorted in order of decreasing amount of dependents.</li>
+<li>The algorithm requires at least two threads, with one being reserved for
+coordinating however many worker threads (this will probably change when the
+library moves from <a href="https://docs.rs/rayon/"><code>rayon</code></a> to something like <a href="https://docs.rs/switchyard/"><code>switchyard</code></a>, enabling
+the use of non-blocking synchronization primitives).</li>
+</ul>
+<h1 id="final-thoughts"><a class="zola-anchor" href="#final-thoughts"
+   aria-label="Anchor link for: final-thoughts" style="opacity:0.2">
+    
+    §
+    
+</a>Final thoughts</h1>
+<p>Multiprocessor scheduling problem has numerous related works to draw ideas from
+in search of solutions to this subset of it - a potential topic for the possible
+part two.
+Others are new algorithms (from existing crates or developed independently),
+and API design of the scheduler abstraction.</p>
+<p>One of the main reasons for this article's existence is serving as a starting
+point for the <a href="https://github.com/bevyengine/bevy/discussions/867">new Bevy scheduler proposal</a>, and most of immediate
+new work will likely be happening around it.</p>
+<p>Since this is a simple static site, discussion of the article is deferred to
+relevant <a href="https://github.com/Ratysz/ratysz.github.io/pull/1">github PR</a> or
+<a href="https://www.reddit.com/r/rust/comments/jujamr/ecs_scheduler_thoughts_part_1/">reddit post</a>.
+Alternatively, refer to contact information on the <a href="/">main page</a>.</p>
+
+                            </div>
+                        </div>
+                        
+                        
+<footer class="card-footer">
+    <div class="article-footer">
+        <div class="columns is-multiline">
+            <div class="column is-12">
+                <p>
+                    Published
+                    
+
+<time datetime="2020-11-15">
+    2020-11-15
+</time>
+
+
+                    
+
+
+                    
+
+
+                    
+
+and tagged
+
+<a href="https://ratysz.github.io/tags/ecs/">
+    <span class="tag is-link">ECS </span>
+</a>
+
+
+
+,
+
+
+
+
+<a href="https://ratysz.github.io/tags/scheduler/">
+    <span class="tag is-link">scheduler </span>
+</a>
+
+
+
+and
+
+
+
+
+<a href="https://ratysz.github.io/tags/rust/">
+    <span class="tag is-link">Rust </span>
+</a>
+
+
+
+
+
+
+                </p>
+            </div>
+            <div class="column">
+                <a class="button is-pulled-right is-info" href="/">Back Home</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+                        
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+
+
+
+
+
+
+
+<script type="text/javascript" src="https:&#x2F;&#x2F;ratysz.github.io&#x2F;js&#x2F;zulma_navbar.js"></script>
+
+    
+
+
+</body>
+
+</html>
